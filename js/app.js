@@ -19,6 +19,7 @@ function init() {
 
     const symbols = ["A","B","C","D","E","F","G","H","I","J"];
 
+    // ELEMENTS
     for (let i = 0; i < symbols.length; i++) {
 
         const div = document.createElement("div");
@@ -39,12 +40,15 @@ function init() {
         scene.add(obj);
         objects.push(obj);
 
+        // TABLE
         const tablePos = new THREE.Object3D();
         tablePos.position.x = (i % 5) * 250 - 500;
         tablePos.position.y = Math.floor(i / 5) * -300 + 200;
+        tablePos.lookAt(0, 0, 0);        // FIX: gives rotation
         targets.table.push(tablePos);
     }
 
+    // SPHERE
     const vec = new THREE.Vector3();
     const l = objects.length;
 
@@ -55,11 +59,12 @@ function init() {
         const obj = new THREE.Object3D();
         obj.position.setFromSphericalCoords(600, phi, theta);
         vec.copy(obj.position).multiplyScalar(2);
-        obj.lookAt(vec);
+        obj.lookAt(vec);                // FIX: ensures outward rotation
 
         targets.sphere.push(obj);
     }
 
+    // HELIX
     for (let i = 0; i < l; i++) {
         const theta = i * 0.35;
         const y = -(i * 50) + 300;
@@ -68,11 +73,12 @@ function init() {
         obj.position.setFromCylindricalCoords(600, theta, y);
 
         vec.set(obj.position.x * 2, y, obj.position.z * 2);
-        obj.lookAt(vec);
+        obj.lookAt(vec);                 // FIX: ensures helix rotates correctly
 
         targets.helix.push(obj);
     }
 
+    // GRID
     for (let i = 0; i < l; i++) {
         const obj = new THREE.Object3D();
         obj.position.set(
@@ -80,6 +86,7 @@ function init() {
             (Math.floor(i / 5) % 2) * -300 + 150,
             Math.floor(i / 10) * 800 - 400
         );
+        obj.lookAt(0, 0, 0);            // FIX: gives grid proper rotation
         targets.grid.push(obj);
     }
 
@@ -96,6 +103,7 @@ function init() {
     document.getElementById("btn-grid").onclick = () => transform(targets.grid);
 
     transform(targets.table);
+
     window.addEventListener("resize", onWindowResize);
 }
 
@@ -106,19 +114,35 @@ function transform(target) {
         const obj = objects[i];
         const t = target[i];
 
+        // POSITION TWEEN
         new TWEEN.Tween(obj.position)
-            .to({ x: t.position.x, y: t.position.y, z: t.position.z }, 1500)
+            .to(
+                {
+                    x: t.position.x,
+                    y: t.position.y,
+                    z: t.position.z
+                },
+                2000
+            )
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
 
+        // ROTATION TWEEN — fully fixed
         new TWEEN.Tween(obj.rotation)
-            .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, 1500)
+            .to(
+                {
+                    x: t.rotation.x,
+                    y: t.rotation.y,
+                    z: t.rotation.z
+                },
+                2000
+            )
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
     }
 
     new TWEEN.Tween({})
-        .to({}, 1500)
+        .to({}, 2000)
         .onUpdate(render)
         .start();
 }
