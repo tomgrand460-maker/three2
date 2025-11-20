@@ -97,14 +97,16 @@ function buildTargets(count) {
         const theta = Math.sqrt(count * Math.PI) * phi;
         obj = new THREE.Object3D();
         obj.position.set(800 * Math.cos(theta) * Math.sin(phi), 800 * Math.sin(theta) * Math.sin(phi), 800 * Math.cos(phi));
+        obj.lookAt(new THREE.Vector3(obj.position.x * 2, obj.position.y * 2, obj.position.z * 2));
         targets.sphere.push(obj);
-
-        obj = new THREE.Object3D();
+        
         const helixRadius = 500;
-        const helixHeight = 12 * i;
         const angle = i * 0.4;
-        obj.position.set(helixRadius * Math.cos(angle), helixHeight - 1500, helixRadius * Math.sin(angle));
-        obj.rotation.y = angle;
+        const helixHeight = 12 * i - 1500;
+        obj = new THREE.Object3D();
+        const angleShift = (i % 2 === 0) ? 0 : Math.PI;
+        obj.position.set(helixRadius * Math.cos(angle + angleShift), helixHeight, helixRadius * Math.sin(angle + angleShift));
+        obj.lookAt(new THREE.Vector3(0, helixHeight, 0));
         targets.helix.push(obj);
 
         obj = new THREE.Object3D();
