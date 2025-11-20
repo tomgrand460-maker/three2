@@ -2,9 +2,10 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>three.js CSS3D People Demo</title>
+    <title>three.js CSS3D Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/style.css" />
+
     <script type="importmap">
     {
         "imports":{
@@ -18,8 +19,8 @@
 
 <div id="container"></div>
 
-<div id="menu">
-    <div id="buttons">
+<div id="menu-row">
+    <div id="menu">
         <button id="btn-table">TABLE</button>
         <button id="btn-sphere">SPHERE</button>
         <button id="btn-helix">HELIX</button>
@@ -27,12 +28,13 @@
     </div>
 
     <div id="legend">
-        <div class="legend-item"><span class="legend-color red"></span> &lt; 100K</div>
-        <div class="legend-item"><span class="legend-color orange"></span> 100K–200K</div>
-        <div class="legend-item"><span class="legend-color green"></span> &gt; 200K</div>
+        <span class="legend-item"><span class="legend-color red"></span> &lt; 100K</span>
+        <span class="legend-item"><span class="legend-color orange"></span> 100K – 200K</span>
+        <span class="legend-item"><span class="legend-color green"></span> &gt; 200K</span>
     </div>
 </div>
 
-<script type="module" src="main.js"></script>
+<script type="module" src="js/app.js"></script>
+
 </body>
 </html>
