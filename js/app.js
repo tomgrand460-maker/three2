@@ -1,141 +1,159 @@
-import * as THREE from 'three';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-import TWEEN from 'three/addons/libs/tween.module.js';
+import * as THREE from "three";
+import { CSS3DRenderer, CSS3DObject } from "three/addons/renderers/CSS3DRenderer.js";
+import { TrackballControls } from "three/addons/controls/TrackballControls.js";
+import TWEEN from "three/addons/libs/tween.module.js";
+
+/*
+  CSV source (published Google Sheet)
+  - you provided this URL:
+*/
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdQ8324RdvqZwBjWEXJj-C9-GE1BIKfYNwNcKA4doOJC5Qi-zR0vWJOEfE3h_WGLYsMMaycNnRaDxY/pub?gid=0&single=true&output=csv";
+
+/* color rules
+   Red #ef3022; Orange #fdca35; Green #3a9f48
+   Ranges:
+     - < 100K => Red
+     - >= 100K and <= 200K => Orange
+     - > 200K => Green
+*/
+const COLORS = {
+    red: "#ef3022",
+    orange: "#fdca35",
+    green: "#3a9f48"
+};
 
 let camera, scene, renderer, controls;
 const objects = [];
 const targets = { table: [], sphere: [], helix: [], grid: [] };
 
-init();
+init(); // sets up camera/renderer/etc
+// fetch and build tiles
+fetchCSVAndBuild(CSV_URL).catch(err => console.error("CSV load error:", err));
+
 animate();
 
-function init() {
+/* ----------------- CSV parsing + building ----------------- */
 
-    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.z = 2000;
+async function fetchCSVAndBuild(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`CSV fetch failed: ${res.status}`);
+    const text = await res.text();
 
-    scene = new THREE.Scene();
+    const rows = parseCSV(text);
+    // Expect headerless rows with: Name,Photo,Age,Country,Interest,Net Worth
+    // Build tiles from rows (skip empty lines)
+    const people = rows
+        .map(r => r.map(cell => cell.trim()))
+        .filter(r => r.length >= 6 && r[0] !== "");
 
-    const symbols = ["A","B","C","D","E","F","G","H","I","J"];
-
-    for (let i = 0; i < symbols.length; i++) {
-
-        const div = document.createElement("div");
-        div.className = "item";
-
-        const s = document.createElement("div");
-        s.className = "symbol";
-        s.textContent = symbols[i];
-        div.appendChild(s);
-
-        const obj = new CSS3DObject(div);
-        obj.position.set(
-            Math.random()*4000-2000,
-            Math.random()*4000-2000,
-            Math.random()*4000-2000
-        );
-
-        scene.add(obj);
-        objects.push(obj);
-
-        const tablePos = new THREE.Object3D();
-        tablePos.position.x = (i % 5) * 250 - 500;
-        tablePos.position.y = Math.floor(i / 5) * -300 + 200;
-        targets.table.push(tablePos);
-    }
-
-    const vec = new THREE.Vector3();
-    const l = objects.length;
-
-    for (let i = 0; i < l; i++) {
-        const phi = Math.acos(-1 + (2 * i) / l);
-        const theta = Math.sqrt(l * Math.PI) * phi;
-
-        const obj = new THREE.Object3D();
-        obj.position.setFromSphericalCoords(600, phi, theta);
-        vec.copy(obj.position).multiplyScalar(2);
-        obj.lookAt(vec);
-
-        targets.sphere.push(obj);
-    }
-
-    for (let i = 0; i < l; i++) {
-        const theta = i * 0.35;
-        const y = -(i * 50) + 300;
-
-        const obj = new THREE.Object3D();
-        obj.position.setFromCylindricalCoords(600, theta, y);
-
-        vec.set(obj.position.x * 2, y, obj.position.z * 2);
-        obj.lookAt(vec);
-
-        targets.helix.push(obj);
-    }
-
-    for (let i = 0; i < l; i++) {
-        const obj = new THREE.Object3D();
-        obj.position.set(
-            (i % 5) * 250 - 500,
-            (Math.floor(i / 5) % 2) * -300 + 150,
-            Math.floor(i / 10) * 800 - 400
-        );
-        targets.grid.push(obj);
-    }
-
-    renderer = new CSS3DRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById("container").appendChild(renderer.domElement);
-
-    controls = new TrackballControls(camera, renderer.domElement);
-    controls.addEventListener("change", render);
-
-    document.getElementById("btn-table").onclick = () => transform(targets.table);
-    document.getElementById("btn-sphere").onclick = () => transform(targets.sphere);
-    document.getElementById("btn-helix").onclick = () => transform(targets.helix);
-    document.getElementById("btn-grid").onclick = () => transform(targets.grid);
-
-    transform(targets.table);
-    window.addEventListener("resize", onWindowResize);
+    buildTiles(people);
+    layoutTargets(); // create targets after we know number of objects
+    transform(targets.table); // initial layout
 }
 
-function transform(target) {
-    TWEEN.removeAll();
+/* Robust CSV parser that handles quoted fields with commas */
+function parseCSV(text) {
+    const rows = [];
+    let current = [];
+    let field = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const next = text[i + 1];
 
-    for (let i = 0; i < objects.length; i++) {
-        const obj = objects[i];
-        const t = target[i];
-
-        new TWEEN.Tween(obj.position)
-            .to({ x: t.position.x, y: t.position.y, z: t.position.z }, 1500)
-            .easing(TWEEN.Easing.Exponential.InOut)
-            .start();
-
-        new TWEEN.Tween(obj.rotation)
-            .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, 1500)
-            .easing(TWEEN.Easing.Exponential.InOut)
-            .start();
+        if (ch === '"' ) {
+            if (inQuotes && next === '"') {
+                // escaped quote
+                field += '"';
+                i++; // skip next
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (ch === ',' && !inQuotes) {
+            current.push(field);
+            field = "";
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+            // handle CRLF or LF
+            // if CRLF, skip the next \n
+            if (ch === '\r' && next === '\n') { i++; }
+            current.push(field);
+            rows.push(current);
+            current = [];
+            field = "";
+        } else {
+            field += ch;
+        }
     }
-
-    new TWEEN.Tween({})
-        .to({}, 1500)
-        .onUpdate(render)
-        .start();
+    // push last field if any
+    if (field !== "" || current.length > 0) {
+        current.push(field);
+        rows.push(current);
+    }
+    return rows;
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    render();
-}
+/* create the CSS3D tiles */
+function buildTiles(people) {
+    // clear previous objects if any
+    while (objects.length) {
+        const o = objects.pop();
+        scene.remove(o);
+    }
+    // create new objects
+    for (let i = 0; i < people.length; i++) {
+        const [name, photoUrl, age, country, interest, netWorthRaw] = people[i];
 
-function animate() {
-    requestAnimationFrame(animate);
-    TWEEN.update();
-    controls.update();
-}
+        const netWorth = parseNetWorth(netWorthRaw);
 
-function render() {
-    renderer.render(scene, camera);
-}
+        const color = pickColor(netWorth);
+
+        // create DOM element
+        const el = document.createElement("div");
+        el.className = "person";
+
+        // color bar
+        const cbar = document.createElement("div");
+        cbar.className = "colorbar";
+        cbar.style.background = color;
+        el.appendChild(cbar);
+
+        // country small top-left
+        const countryEl = document.createElement("div");
+        countryEl.className = "country";
+        countryEl.textContent = country;
+        el.appendChild(countryEl);
+
+        // age small top-right
+        const ageEl = document.createElement("div");
+        ageEl.className = "age";
+        ageEl.textContent = age;
+        el.appendChild(ageEl);
+
+        // photo (img)
+        const img = document.createElement("img");
+        img.className = "photo";
+        img.alt = name;
+        img.src = photoUrl;
+        // For graceful fallback if image fails
+        img.onerror = function () {
+            img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+                `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='#222'/><text x='50%' y='50%' fill='#999' font-size='12' font-family='Arial' dominant-baseline='middle' text-anchor='middle'>No image</text></svg>`
+            );
+        };
+        el.appendChild(img);
+
+        // name below photo
+        const nameEl = document.createElement("div");
+        nameEl.className = "name";
+        nameEl.textContent = name;
+        el.appendChild(nameEl);
+
+        // interest bottom
+        const interestEl = document.createElement("div");
+        interestEl.className = "interest";
+        interestEl.textContent = interest;
+        el.appendChild(interestEl);
+
+        // border color highlight
+        el.style.borderColor = hexToRgba(color, 0.85);
+        el.style.background = "rgb
