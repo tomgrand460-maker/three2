@@ -1,5 +1,4 @@
-/* EXACT VISUAL MATCH TO ORIGINAL INLINE STYLES */
-
+/* Global / original look */
 html, body {
     margin: 0;
     padding: 0;
@@ -13,7 +12,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* Element Panels */
+/* Old item style kept for reference; new tiles use .person */
 .item {
     width: 120px;
     height: 160px;
@@ -22,28 +21,105 @@ html, body {
     text-align: center;
     position: relative;
     background: rgba(0,127,127,0.4);
-
-    /* IMPORTANT: makes CSS3D objects render the same */
-    transform-style: preserve-3d;
 }
 
-/* Symbol letter */
-.symbol {
-    font-size: 48px;
-    margin-top: 20px;
-    color: white;
-    text-shadow: 0 0 10px cyan;
+/* New tile (person) style — similar to original but adjusted for photo */
+.person {
+    width: 160px;
+    height: 200px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.15); /* solid but subtle */
+    background: rgba(10, 10, 10, 0.45);         /* slightly see-through */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6), 0 0 18px rgba(0,255,255,0.06);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-style: preserve-3d; /* keep 3D rendering behavior */
 }
 
-/* Bottom menu */
+/* top left country */
+.person .country {
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(2px);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* top right age */
+.person .age {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.25);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* photo area */
+.person .photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 6px;
+    margin-top: 22px;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+}
+
+/* name under photo */
+.person .name {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 13px;
+    padding: 0 6px;
+    line-height: 1.1;
+    font-weight: 700;
+    color: #eafcff;
+}
+
+/* interest bottom */
+.person .interest {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.95);
+    padding: 0 8px;
+    font-weight: 600;
+}
+
+/* Add thin colored bar at top to emphasize coloring (also serves as color hint) */
+.person .colorbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 6px;
+}
+
+/* Menu buttons (unchanged) */
 #menu {
     position: absolute;
     bottom: 20px;
     width: 100%;
     text-align: center;
+    z-index: 10;
 }
 
-/* Buttons */
 button {
     color: #8ff;
     background: transparent;
@@ -51,12 +127,45 @@ button {
     border: 1px solid #8ff;
     cursor: pointer;
     font-size: 14px;
-
-    /* makes button size match original exactly */
     line-height: 1.2;
 }
 
 button:hover {
-    background: rgba(0,255,255,0.3);
+    background: rgba(0,255,255,0.12);
 }
 
+/* Legend (bottom-right) */
+#legend {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    background: rgba(0,0,0,0.45);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+    font-size: 13px;
+    color: #eafcff;
+    z-index: 20;
+    backdrop-filter: blur(2px);
+}
+
+.legend-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.legend-row .swatch {
+    width: 14px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.06);
+}
