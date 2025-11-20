@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>three.js CSS3D Demo leh</title>
+    <title>three.js CSS3D Demo — CSV People</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="css/style.css" />
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/style.css">
 
+    <!-- Importmap for three.js modules -->
     <script type="importmap">
     {
         "imports": {
@@ -27,6 +30,16 @@
     <button id="btn-grid">GRID</button>
 </div>
 
+<!-- Legend bottom-right -->
+<div id="legend">
+    <div class="legend-title">Net worth</div>
+    <div class="legend-row"><span class="swatch" style="background:#ef3022"></span> &lt; $100K</div>
+    <div class="legend-row"><span class="swatch" style="background:#fdca35"></span> $100K–$200K</div>
+    <div class="legend-row"><span class="swatch" style="background:#3a9f48"></span> &gt; $200K</div>
+</div>
+
+<!-- External JS module -->
 <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
