@@ -19,7 +19,6 @@ function init() {
 
     const symbols = ["A","B","C","D","E","F","G","H","I","J"];
 
-    // ELEMENTS
     for (let i = 0; i < symbols.length; i++) {
 
         const div = document.createElement("div");
@@ -40,14 +39,12 @@ function init() {
         scene.add(obj);
         objects.push(obj);
 
-        // TABLE target
         const tablePos = new THREE.Object3D();
         tablePos.position.x = (i % 5) * 250 - 500;
         tablePos.position.y = Math.floor(i / 5) * -300 + 200;
         targets.table.push(tablePos);
     }
 
-    // SPHERE
     const vec = new THREE.Vector3();
     const l = objects.length;
 
@@ -63,7 +60,6 @@ function init() {
         targets.sphere.push(obj);
     }
 
-    // HELIX
     for (let i = 0; i < l; i++) {
         const theta = i * 0.35;
         const y = -(i * 50) + 300;
@@ -77,7 +73,6 @@ function init() {
         targets.helix.push(obj);
     }
 
-    // GRID
     for (let i = 0; i < l; i++) {
         const obj = new THREE.Object3D();
         obj.position.set(
@@ -101,7 +96,6 @@ function init() {
     document.getElementById("btn-grid").onclick = () => transform(targets.grid);
 
     transform(targets.table);
-
     window.addEventListener("resize", onWindowResize);
 }
 
@@ -113,32 +107,18 @@ function transform(target) {
         const t = target[i];
 
         new TWEEN.Tween(obj.position)
-            .to(
-                {
-                    x: t.position.x,
-                    y: t.position.y,
-                    z: t.position.z
-                },
-                2000
-            )
+            .to({ x: t.position.x, y: t.position.y, z: t.position.z }, 1500)
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
 
         new TWEEN.Tween(obj.rotation)
-            .to(
-                {
-                    x: t.rotation.x,
-                    y: t.rotation.y,
-                    z: t.rotation.z
-                },
-                2000
-            )
+            .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, 1500)
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
     }
 
     new TWEEN.Tween({})
-        .to({}, 2000)
+        .to({}, 1500)
         .onUpdate(render)
         .start();
 }
