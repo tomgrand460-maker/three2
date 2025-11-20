@@ -31,24 +31,28 @@ function init() {
 async function loadCSV() {
     const res = await fetch(csvUrl);
     const txt = await res.text();
-    const rows = txt.split(/\r?\n/).filter(r => r.trim().length > 0);
 
-    let parsed = rows.map(r => {
-        const parts = r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-        return {
-            name: parts[0],
-            photo: parts[1],
-            age: parts[2],
-            country: parts[3],
-            interest: parts[4].replace(/"/g, ""),
-            net: parts[5].replace(/"/g, "")
-        };
+    Papa.parse(txt, {
+        header: false,
+        skipEmptyLines: true,
+        complete: function (results) {
+            const rows = results.data;
+
+            const parsed = rows.map(parts => ({
+                name: parts[0],
+                photo: parts[1],
+                age: parts[2],
+                country: parts[3],
+                interest: parts[4],
+                net: parts[5]
+            }));
+
+            buildTiles(parsed);
+            buildTargets(parsed.length);
+            transform(targets.table);
+            animate();
+        }
     });
-
-    buildTiles(parsed);
-    buildTargets(parsed.length);
-    transform(targets.table);
-    animate();
 }
 
 function netColor(v) {
