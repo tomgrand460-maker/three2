@@ -25,7 +25,6 @@ html, body {
 
     /* IMPORTANT: makes CSS3D objects render the same */
     transform-style: preserve-3d;
-    backface-visibility: hidden;
 }
 
 /* Symbol letter */
