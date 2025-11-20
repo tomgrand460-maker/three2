@@ -156,4 +156,181 @@ function buildTiles(people) {
 
         // border color highlight
         el.style.borderColor = hexToRgba(color, 0.85);
-        el.style.background = "rgb
+        el.style.background = "rgba(10,10,10,0.45)"; // keep slightly translucent
+
+        // create CSS3DObject and add to scene
+        const objCSS = new CSS3DObject(el);
+
+        // place randomly to start
+        objCSS.position.x = Math.random() * 4000 - 2000;
+        objCSS.position.y = Math.random() * 4000 - 2000;
+        objCSS.position.z = Math.random() * 4000 - 2000;
+
+        scene.add(objCSS);
+        objects.push(objCSS);
+    }
+}
+
+/* parse net worth string "$251,260.80" -> number 251260.8 */
+function parseNetWorth(raw) {
+    if (!raw) return 0;
+    // remove $ and commas and any whitespace
+    const cleaned = raw.replace(/[\$,]/g, "").trim();
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+}
+
+/* pick color based on ranges (user confirmed)
+   - <100000 => red
+   - 100000 <= and <= 200000 => orange
+   - >200000 => green
+*/
+function pickColor(value) {
+    if (value > 200000) return COLORS.green;
+    if (value >= 100000 && value <= 200000) return COLORS.orange;
+    return COLORS.red;
+}
+
+/* helper: convert hex to rgba string with alpha */
+function hexToRgba(hex, alpha = 1) {
+    const h = hex.replace("#", "");
+    const bigint = parseInt(h, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/* ----------------- three.js + CSS3D setup + layouts ----------------- */
+
+function init() {
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.z = 2500;
+
+    scene = new THREE.Scene();
+
+    renderer = new CSS3DRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById("container").appendChild(renderer.domElement);
+
+    controls = new TrackballControls(camera, renderer.domElement);
+    controls.minDistance = 500;
+    controls.maxDistance = 8000;
+    controls.addEventListener("change", render);
+
+    // wire up buttons (they'll work after CSV loads too)
+    document.getElementById("btn-table").onclick = () => transform(targets.table);
+    document.getElementById("btn-sphere").onclick = () => transform(targets.sphere);
+    document.getElementById("btn-helix").onclick = () => transform(targets.helix);
+    document.getElementById("btn-grid").onclick = () => transform(targets.grid);
+
+    window.addEventListener("resize", onWindowResize);
+}
+
+function layoutTargets() {
+    // Build targets after objects length is known
+    targets.table = [];
+    targets.sphere = [];
+    targets.helix = [];
+    targets.grid = [];
+
+    const l = objects.length;
+
+    // table: basic grid (5 columns)
+    for (let i = 0; i < l; i++) {
+        const object = new THREE.Object3D();
+        object.position.x = ( ( i % 5 ) * 320 ) - 640;
+        object.position.y = - ( Math.floor( i / 5 ) * 280 ) + 280;
+        object.position.z = 0;
+        targets.table.push(object);
+    }
+
+    // sphere
+    for (let i = 0; i < l; i++) {
+        const phi = Math.acos(-1 + (2 * i) / l);
+        const theta = Math.sqrt(l * Math.PI) * phi;
+
+        const object = new THREE.Object3D();
+        object.position.setFromSphericalCoords(900, phi, theta);
+
+        const vector = new THREE.Vector3().copy(object.position).multiplyScalar(2);
+        object.lookAt(vector);
+
+        targets.sphere.push(object);
+    }
+
+    // helix
+    for (let i = 0; i < l; i++) {
+        const theta = i * 0.175 + Math.PI;
+        const y = - ( i * 10 ) + ( l * 5 );
+
+        const object = new THREE.Object3D();
+        object.position.setFromCylindricalCoords(900, theta, y);
+
+        const vector = new THREE.Vector3(object.position.x * 2, object.position.y, object.position.z * 2);
+        object.lookAt(vector);
+
+        targets.helix.push(object);
+    }
+
+    // grid (3D stacks)
+    for (let i = 0; i < l; i++) {
+        const object = new THREE.Object3D();
+        object.position.x = ( ( i % 6 ) * 400 ) - 1000;
+        object.position.y = ( - ( Math.floor( i / 6 ) % 6 ) * 300 ) + 600;
+        object.position.z = ( Math.floor( i / 36 ) ) * 1000 - 2000;
+        targets.grid.push(object);
+    }
+}
+
+/* transform helper: tween all objects to match target positions */
+function transform( targetsArray, duration = 1500 ) {
+    if (!targetsArray || targetsArray.length !== objects.length) {
+        // if targets aren't ready yet, try building them
+        layoutTargets();
+    }
+
+    TWEEN.removeAll();
+
+    for ( let i = 0; i < objects.length; i ++ ) {
+        const object = objects[ i ];
+        const target = (targetsArray && targetsArray[i]) ? targetsArray[i] : targets.table[i];
+
+        new TWEEN.Tween( object.position )
+            .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+
+        new TWEEN.Tween( object.rotation )
+            .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+    }
+
+    new TWEEN.Tween( {} )
+        .to( {}, duration * 2 )
+        .onUpdate( render )
+        .start();
+}
+
+/* ----------------- helpers + render loop ----------------- */
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    render();
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+
+    TWEEN.update();
+    controls.update();
+}
+
+function render() {
+    renderer.render( scene, camera );
+}
