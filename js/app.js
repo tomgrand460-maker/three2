@@ -1,7 +1,7 @@
-import * as THREE from "three";
-import { CSS3DRenderer, CSS3DObject } from "three/addons/renderers/CSS3DRenderer.js";
-import { TrackballControls } from "three/addons/controls/TrackballControls.js";
-import TWEEN from "three/addons/libs/tween.module.js";
+import * as THREE from 'three';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+import TWEEN from 'three/addons/libs/tween.module.js';
 
 let camera, scene, renderer, controls;
 const objects = [];
@@ -20,6 +20,7 @@ function init() {
     const symbols = ["A","B","C","D","E","F","G","H","I","J"];
 
     for (let i = 0; i < symbols.length; i++) {
+
         const div = document.createElement("div");
         div.className = "item";
 
@@ -30,9 +31,9 @@ function init() {
 
         const obj = new CSS3DObject(div);
         obj.position.set(
-            Math.random() * 4000 - 2000,
-            Math.random() * 4000 - 2000,
-            Math.random() * 4000 - 2000
+            Math.random()*4000-2000,
+            Math.random()*4000-2000,
+            Math.random()*4000-2000
         );
 
         scene.add(obj);
@@ -55,6 +56,7 @@ function init() {
         obj.position.setFromSphericalCoords(600, phi, theta);
         vec.copy(obj.position).multiplyScalar(2);
         obj.lookAt(vec);
+
         targets.sphere.push(obj);
     }
 
@@ -64,8 +66,10 @@ function init() {
 
         const obj = new THREE.Object3D();
         obj.position.setFromCylindricalCoords(600, theta, y);
+
         vec.set(obj.position.x * 2, y, obj.position.z * 2);
         obj.lookAt(vec);
+
         targets.helix.push(obj);
     }
 
@@ -92,7 +96,6 @@ function init() {
     document.getElementById("btn-grid").onclick = () => transform(targets.grid);
 
     transform(targets.table);
-
     window.addEventListener("resize", onWindowResize);
 }
 
