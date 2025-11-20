@@ -73,6 +73,7 @@ function buildTiles(data) {
                 <span class="age">${p.age}</span>
             </div>
             <div class="photo"><img src="${p.photo}" /></div>
+            <div class="name">${p.name}</div>
             <div class="interest">${p.interest}</div>
         `;
 
