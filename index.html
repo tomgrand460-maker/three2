@@ -1,45 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="utf-8" />
-    <title>three.js CSS3D Demo — CSV People</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- External CSS -->
-    <link rel="stylesheet" href="css/style.css">
-
-    <!-- Importmap for three.js modules -->
+    <title>three.js CSS3D People Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
     <script type="importmap">
     {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        "imports":{
+            "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
         }
     }
     </script>
 </head>
-
 <body>
 
 <div id="container"></div>
 
 <div id="menu">
-    <button id="btn-table">TABLE</button>
-    <button id="btn-sphere">SPHERE</button>
-    <button id="btn-helix">HELIX</button>
-    <button id="btn-grid">GRID</button>
+    <div id="buttons">
+        <button id="btn-table">TABLE</button>
+        <button id="btn-sphere">SPHERE</button>
+        <button id="btn-helix">HELIX</button>
+        <button id="btn-grid">GRID</button>
+    </div>
+
+    <div id="legend">
+        <div class="legend-item"><span class="legend-color red"></span> &lt; 100K</div>
+        <div class="legend-item"><span class="legend-color orange"></span> 100K–200K</div>
+        <div class="legend-item"><span class="legend-color green"></span> &gt; 200K</div>
+    </div>
 </div>
 
-<!-- Legend bottom-right -->
-<div id="legend">
-    <div class="legend-title">Net worth</div>
-    <div class="legend-row"><span class="swatch" style="background:#ef3022"></span> &lt; $100K</div>
-    <div class="legend-row"><span class="swatch" style="background:#fdca35"></span> $100K–$200K</div>
-    <div class="legend-row"><span class="swatch" style="background:#3a9f48"></span> &gt; $200K</div>
-</div>
-
-<!-- External JS module -->
-<script type="module" src="js/app.js"></script>
-
+<script type="module" src="main.js"></script>
 </body>
 </html>
