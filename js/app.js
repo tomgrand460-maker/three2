@@ -40,11 +40,10 @@ function init() {
         scene.add(obj);
         objects.push(obj);
 
-        // TABLE
+        // TABLE target
         const tablePos = new THREE.Object3D();
         tablePos.position.x = (i % 5) * 250 - 500;
         tablePos.position.y = Math.floor(i / 5) * -300 + 200;
-        tablePos.lookAt(0, 0, 0);        // FIX: gives rotation
         targets.table.push(tablePos);
     }
 
@@ -59,7 +58,7 @@ function init() {
         const obj = new THREE.Object3D();
         obj.position.setFromSphericalCoords(600, phi, theta);
         vec.copy(obj.position).multiplyScalar(2);
-        obj.lookAt(vec);                // FIX: ensures outward rotation
+        obj.lookAt(vec);
 
         targets.sphere.push(obj);
     }
@@ -73,7 +72,7 @@ function init() {
         obj.position.setFromCylindricalCoords(600, theta, y);
 
         vec.set(obj.position.x * 2, y, obj.position.z * 2);
-        obj.lookAt(vec);                 // FIX: ensures helix rotates correctly
+        obj.lookAt(vec);
 
         targets.helix.push(obj);
     }
@@ -86,7 +85,6 @@ function init() {
             (Math.floor(i / 5) % 2) * -300 + 150,
             Math.floor(i / 10) * 800 - 400
         );
-        obj.lookAt(0, 0, 0);            // FIX: gives grid proper rotation
         targets.grid.push(obj);
     }
 
@@ -114,7 +112,6 @@ function transform(target) {
         const obj = objects[i];
         const t = target[i];
 
-        // POSITION TWEEN
         new TWEEN.Tween(obj.position)
             .to(
                 {
@@ -127,7 +124,6 @@ function transform(target) {
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
 
-        // ROTATION TWEEN — fully fixed
         new TWEEN.Tween(obj.rotation)
             .to(
                 {
