@@ -211,21 +211,24 @@ function onWindowResize() {
 function animate(time) {
     requestAnimationFrame(animate);
 
-    // throttle to ~60fps
-    if (time - lastFrame < 16) return;
-    lastFrame = time;
+    const delta = time - lastFrame;
 
-    controls.update();   // <-- THIS MUST BE HERE
+    // Always update camera controls
+    controls.update();
 
-    const tweensActive = TWEEN.getAll().length > 0;
-
-    if (tweensActive) {
+    // Always update tweens
+    if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
     }
 
-    if (needsRender) {
-        renderer.render(scene, camera);
-        needsRender = false;
+    // Throttle ONLY rendering (not logic)
+    if (delta > 16) {
+        lastFrame = time;
+
+        if (needsRender) {
+            renderer.render(scene, camera);
+            needsRender = false;
+        }
     }
 }
