@@ -73,21 +73,21 @@ body {
 
 .tile.red { 
 	box-shadow: 0px 0px 12px rgba(239, 48, 34, 0.3);
-    border: 3px solid rgba(239, 48, 34, 0.75);
+    border: 3px solid rgba(239, 48, 34, 0.5);
     border-radius: 10px;
     background: rgba(239, 48, 34, 0.35); 
 }
 
 .tile.orange {
 	box-shadow: 0px 0px 12px rgba(253, 202, 53, 0.3);
-    border: 3px solid rgba(253, 202, 53, 0.75);
+    border: 3px solid rgba(253, 202, 53, 0.5);
     border-radius: 10px;
     background: rgba(253, 202, 53, 0.35); 
 }
 
 .tile.green { 
 	box-shadow: 0px 0px 12px rgba(58, 159, 72, 0.3);
-    border: 3px solid rgba(58, 159, 72, 0.75);
+    border: 3px solid rgba(58, 159, 72, 0.5);
     border-radius: 10px;
     background: rgba(58, 159, 72, 0.35); 
 }
