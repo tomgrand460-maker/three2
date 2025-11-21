@@ -27,7 +27,6 @@ function init() {
     controls.rotateSpeed = 2.0;
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
-    controls.addEventListener('change', render);
 
     animate();
 
