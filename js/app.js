@@ -162,28 +162,40 @@ function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
     TWEEN.removeAll();
 
+    const setNeedsRender = () => needsRender = true;
     const maxStagger = 300;
     const perItemStagger = 6;
-    const setNeedsRender = () => needsRender = true;
 
     objects.forEach((obj, i) => {
         const target = targetsArray[i];
         if (!target) return;
-        
-        const targetRotation = {
-            x: target.rotation.x,
-            y: target.rotation.y,
-            z: target.rotation.z
-        };
+
         const delay = Math.min(i * perItemStagger, maxStagger);
-    
-        new TWEEN.Tween(obj)
-            .to({ position: target.position, rotation: targetRotation }, duration)
+
+        new TWEEN.Tween(obj.position)
+            .to({
+                x: target.position.x,
+                y: target.position.y,
+                z: target.position.z
+            }, duration)
             .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
             .onStart(setNeedsRender)
             .onUpdate(setNeedsRender)
-            .onComplete(setNeedsRender)
+            .start();
+
+        const targetQuat = new THREE.Quaternion().copy(target.quaternion);
+        const currentQuat = new THREE.Quaternion().copy(obj.quaternion);
+
+        const qTween = { t: 0 };
+        new TWEEN.Tween(qTween)
+            .to({ t: 1 }, duration)
+            .delay(delay)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onUpdate(() => {
+                THREE.Quaternion.slerp(currentQuat, targetQuat, obj.quaternion, qTween.t);
+                needsRender = true;
+            })
             .start();
     });
 
