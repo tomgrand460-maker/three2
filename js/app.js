@@ -118,7 +118,7 @@ function buildTargets(count) {
 
         obj = new THREE.Object3D();
         const layers = 10;
-        const zGap = 500;
+        const zGap = 700;
         const layerIndex = Math.floor(i / 20) % layers;
         const totalDepth = (layers - 1) * zGap;
         const centeredZ = layerIndex * zGap - totalDepth / 2;
