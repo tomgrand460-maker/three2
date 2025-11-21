@@ -1,4 +1,4 @@
-// app.js
+// js/app.js
 import * as THREE from 'three';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 
@@ -17,13 +17,13 @@ let raycaster, mouse, lastHover = null;
 let html2canvasAvailable = typeof html2canvas !== 'undefined';
 
 // Tile visual constants (match your CSS)
-const CSS_TILE_W = 180; // css pixels (as in your .tile)
+const CSS_TILE_W = 180; // css pixels
 const CSS_TILE_H = 240;
-const DPR = Math.min(window.devicePixelRatio || 1, 2); // limit for performance
-const CANVAS_W = CSS_TILE_W * DPR;
-const CANVAS_H = CSS_TILE_H * DPR;
-const PLANE_W = 220; // keep plane dims to match layout spacing you previously used
-const PLANE_H = 260; // (these were your previous TILE_W/TILE_H for plane geometry spacing)
+const DPR = Math.min(window.devicePixelRatio || 1, 2); // cap DPR for perf
+const CANVAS_W = Math.round(CSS_TILE_W * DPR);
+const CANVAS_H = Math.round(CSS_TILE_H * DPR);
+const PLANE_W = 220; // keep plane dims to preserve layout math
+const PLANE_H = 260;
 
 init();
 loadCSV();
@@ -58,7 +58,7 @@ function init() {
 
     controls.addEventListener('change', () => { needsRender = true; });
 
-    // Ambient light (optional, materials are basic)
+    // Ambient light (not required, but OK)
     const ambient = new THREE.AmbientLight(0xffffff, 1.0);
     scene.add(ambient);
 
@@ -66,10 +66,7 @@ function init() {
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
 
-    // Mouse move listener for hover detection
     window.addEventListener('mousemove', onPointerMove);
-
-    // Resize
     window.addEventListener('resize', onWindowResize);
 
     animate();
@@ -115,7 +112,14 @@ function netColor(v) {
     return 'green';
 }
 
-// utility: clear previous objects and release textures
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m];
+    });
+}
+
+// clear previous three objects & release textures
 function clearSceneTiles() {
     objects.forEach(o => {
         scene.remove(o);
@@ -148,21 +152,16 @@ function buildTiles(data) {
         dom.style.height = CSS_TILE_H + 'px';
         dom.style.boxSizing = 'border-box';
 
+        // Use data-src (we will convert to base64) to avoid immediate cross-origin image issues
         dom.innerHTML = `
             <div class="top-row">
                 <span class="country">${escapeHtml(p.country || '')}</span>
                 <span class="age">${escapeHtml(p.age || '')}</span>
             </div>
-            <div class="photo"><img src="${p.photo || ''}" /></div>
+            <div class="photo"><img data-src="${p.photo || ''}" /></div>
             <div class="name">${escapeHtml(p.name || '')}</div>
             <div class="interest">${escapeHtml(p.interest || '')}</div>
         `;
-
-        // Ensure the image uses crossOrigin when possible (helps html2canvas & drawImage)
-        const imgEl = dom.querySelector('img');
-        if (imgEl) {
-            imgEl.crossOrigin = 'anonymous';
-        }
 
         // append to hidden template root so CSS applies
         if (templateRoot) templateRoot.appendChild(dom);
@@ -182,37 +181,105 @@ function buildTiles(data) {
         texture.generateMipmaps = false;
         texture.needsUpdate = true;
 
-        // Plane geometry uses the plane sizes you had earlier (to preserve layout math)
         const geometry = new THREE.PlaneGeometry(PLANE_W, PLANE_H);
         const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
         const mesh = new THREE.Mesh(geometry, material);
 
-        // initial scatter like your old code
         mesh.position.set(Math.random() * 4000 - 2000, Math.random() * 4000 - 2000, Math.random() * 4000 - 2000);
 
-        // keep references
         tilesMeta.push({
-            dom, canvas, ctx, texture, data: p, mesh, hover: false, lastRenderedHash: null
+            dom, canvas, ctx, texture, data: p, mesh, hover: false, loadedImage: null
         });
 
         scene.add(mesh);
         objects.push(mesh);
 
-        // attempt to pre-render via html2canvas if available, else draw image onto canvas directly
-        rasterizeTileToCanvas(i);
+        // start image conversion & prefetch (async) — this will ultimately call rasterizeTileToCanvas
+        convertTileImageToDataURL(i).then(dataUrl => {
+            if (dataUrl) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    tilesMeta[i].loadedImage = img;
+                    // If html2canvas will be used, we'll let rasterize handle using html2canvas; but having loadedImage helps fallback draw
+                    rasterizeTileToCanvas(i, tilesMeta[i].hover || false);
+                };
+                img.onerror = () => {
+                    // still attempt rasterization (html2canvas may still render correctly if it can)
+                    rasterizeTileToCanvas(i, tilesMeta[i].hover || false);
+                };
+                img.src = dataUrl;
+            } else {
+                // no dataUrl — attempt rasterization anyway (fallback draw used if html2canvas fails)
+                rasterizeTileToCanvas(i, tilesMeta[i].hover || false);
+            }
+        }).catch(() => {
+            rasterizeTileToCanvas(i, tilesMeta[i].hover || false);
+        });
     });
 
     needsRender = true;
 }
 
 // -------------------------------
-// Rasterization: DOM -> canvas using html2canvas if possible, otherwise draw via drawTileToCanvas
+// Convert image to base64 DataURL for given tile index.
+// Strategy:
+// 1) Try fetch(url) -> blob -> base64 (only works if server allows CORS).
+// 2) If fails, fall back to a public proxy (CORS proxy) and fetch via proxy.
+// 3) If still fails, return null (fallback drawing used).
+// Note: using a proxy may have rate/availability limits; replace with your own proxy for production.
 // -------------------------------
-
-function rasterizeTileToCanvas(index, useHover = null) {
-    // index: tilesMeta index
+async function convertTileImageToDataURL(index) {
     const meta = tilesMeta[index];
-    if (!meta) return;
+    if (!meta) return null;
+    const imgEl = meta.dom.querySelector('img[data-src]');
+    if (!imgEl) return null;
+    const url = imgEl.getAttribute('data-src') || '';
+    if (!url) return null;
+
+    // helper: blob -> dataURL
+    const blobToDataURL = (blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+
+    // try direct fetch first (fast & clean)
+    try {
+        const res = await fetch(url, { mode: 'cors' });
+        if (!res.ok) throw new Error('fetch failed');
+        const blob = await res.blob();
+        const dataUrl = await blobToDataURL(blob);
+        // set img src in the DOM clone (so html2canvas will see it)
+        imgEl.src = dataUrl;
+        return dataUrl;
+    } catch (err) {
+        // direct fetch failed (likely CORS). Try public proxy as fallback.
+    }
+
+    // fallback: try public proxy (corsproxy.io)
+    try {
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        const res2 = await fetch(proxyUrl);
+        if (!res2.ok) throw new Error('proxy fetch failed');
+        const blob2 = await res2.blob();
+        const dataUrl2 = await blobToDataURL(blob2);
+        imgEl.src = dataUrl2;
+        return dataUrl2;
+    } catch (err) {
+        // last fallback failed; we will return null and rely on manual draw fallback.
+        console.warn('Image conversion failed for', url, err);
+        return null;
+    }
+}
+
+// -------------------------------
+// Rasterization: DOM -> canvas using html2canvas if possible, otherwise manual draw
+// -------------------------------
+function rasterizeTileToCanvas(index, useHover = null) {
+    const meta = tilesMeta[index];
+    if (!meta) return Promise.resolve();
 
     const dom = meta.dom;
     const canvas = meta.canvas;
@@ -220,100 +287,68 @@ function rasterizeTileToCanvas(index, useHover = null) {
     const p = meta.data;
     const colorClass = netColor(p.net);
 
-    // if html2canvas available, use it (best fidelity)
+    // Apply hover class to DOM clone if specified; if null => leave current
+    if (useHover === true) dom.classList.add('hover-effect');
+    else if (useHover === false) dom.classList.remove('hover-effect');
+
     if (html2canvasAvailable) {
-        // html2canvas options: backgroundColor null to keep transparent backing
-        // scale: DPR so result matches high DPI canvas size
         const opts = {
             backgroundColor: null,
             scale: DPR,
-            useCORS: true,
-            // onclone: (clonedDoc) => { } // if needed
+            useCORS: false, // useCORS false because we've already tried to convert images to dataURL
+            allowTaint: true
         };
 
-        // Apply hover class if requested (null => keep current)
-        if (useHover === true) dom.classList.add('hover-effect');
-        else if (useHover === false) dom.classList.remove('hover-effect');
-
-        // html2canvas returns a canvas we can draw to the texture's canvas
-        return html2canvas(dom, opts).then((rendered) => {
+        return html2canvas(dom, opts).then(rendered => {
             try {
-                // draw the rendered content into our target canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(rendered, 0, 0, canvas.width, canvas.height);
                 meta.texture.needsUpdate = true;
                 needsRender = true;
             } catch (err) {
-                // If drawing fails (CORS taint), fallback to our manual draw
-                console.warn('html2canvas drawImage failed, falling back to manual draw', err);
-                if (useHover === true) drawTileToCanvas(ctx, p, colorClass, meta.loadedImage || null, true);
-                else if (useHover === false) drawTileToCanvas(ctx, p, colorClass, meta.loadedImage || null, false);
+                // if drawImage fails (rare), fallback to manual draw
+                if (meta.loadedImage) drawTileToCanvas(ctx, p, colorClass, meta.loadedImage, !!useHover);
+                else drawTileToCanvas(ctx, p, colorClass, null, !!useHover);
                 meta.texture.needsUpdate = true;
                 needsRender = true;
             }
-        }).catch((err) => {
-            // html2canvas failed (often due to cross-origin images). Fallback.
-            // Remove hover class if we applied it
-            if (useHover === true) dom.classList.remove('hover-effect');
-            // fallback manual draw using image if available
-            if (meta.loadedImage) {
-                drawTileToCanvas(ctx, p, colorClass, meta.loadedImage, !!useHover);
-            } else {
-                drawTileToCanvas(ctx, p, colorClass, null, !!useHover);
-            }
+        }).catch(err => {
+            // html2canvas failed -> fallback manual draw
+            if (meta.loadedImage) drawTileToCanvas(ctx, p, colorClass, meta.loadedImage, !!useHover);
+            else drawTileToCanvas(ctx, p, colorClass, null, !!useHover);
             meta.texture.needsUpdate = true;
             needsRender = true;
             return Promise.resolve();
         });
     } else {
-        // html2canvas not present — fallback manual draw using loaded image
-        if (useHover === true) dom.classList.add('hover-effect');
-        else if (useHover === false) dom.classList.remove('hover-effect');
-
-        if (meta.loadedImage) {
-            drawTileToCanvas(ctx, p, colorClass, meta.loadedImage, !!useHover);
-        } else {
-            drawTileToCanvas(ctx, p, colorClass, null, !!useHover);
-        }
+        // html2canvas not present: fallback manual draw
+        if (meta.loadedImage) drawTileToCanvas(ctx, p, colorClass, meta.loadedImage, !!useHover);
+        else drawTileToCanvas(ctx, p, colorClass, null, !!useHover);
         meta.texture.needsUpdate = true;
         needsRender = true;
         return Promise.resolve();
     }
 }
 
-// When an image is loaded for a tile, store it and re-rasterize (used by image loader)
-function onTileImageLoaded(index, img) {
-    const meta = tilesMeta[index];
-    if (!meta) return;
-    meta.loadedImage = img;
-    // Re-render using html2canvas if available (it may capture DOM-level effects); otherwise draw manually
-    rasterizeTileToCanvas(index, meta.hover || false);
-}
-
 // -------------------------------
 // drawTileToCanvas: manual fallback to draw visuals using 2D canvas
-// This mirrors the CSS structure and the hover glow option EXACT CSS look (Option 1).
+// Mirrors CSS and implements the hover effect (Option 1 — exact look).
 // -------------------------------
 function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
-    // We'll draw at ctx.canvas.width/height (already DPR scaled)
     const w = ctx.canvas.width;
     const h = ctx.canvas.height;
-
-    // scale factor between CSS size and canvas pixels
     const scale = w / CSS_TILE_W;
 
     ctx.clearRect(0, 0, w, h);
 
-    // Background (semi-transparent to match CSS background)
-    // The CSS has backdrop-filter blur and a translucent background per color; approximate with a soft fill.
     ctx.save();
-    ctx.fillStyle = 'rgba(17,17,17,1)'; // page bg fallback (your body bg #111)
+    // page background fallback
+    ctx.fillStyle = 'rgba(17,17,17,1)';
     ctx.fillRect(0, 0, w, h);
 
-    // rounded rect box background using colorClass translucent fill
+    // base fills, borders
     let baseFill = 'rgba(255,255,255,0.03)';
     let borderColor = 'rgba(224,224,224,0.15)';
-    let shadowColor = 'rgba(0,0,0,0.2)';
     if (colorClass === 'red') {
         baseFill = 'rgba(239,48,34,0.35)';
         borderColor = 'rgba(239,48,34,0.5)';
@@ -325,18 +360,12 @@ function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
         borderColor = 'rgba(58,159,72,0.5)';
     }
 
-    // If hover: stronger border + bigger glow — exactly matching your CSS hover specs (Option 1)
     if (isHover) {
-        if (colorClass === 'red') {
-            borderColor = 'rgba(239,48,34,1)';
-        } else if (colorClass === 'orange') {
-            borderColor = 'rgba(253,202,53,1)';
-        } else if (colorClass === 'green') {
-            borderColor = 'rgba(58,159,72,1)';
-        }
+        if (colorClass === 'red') borderColor = 'rgba(239,48,34,1)';
+        else if (colorClass === 'orange') borderColor = 'rgba(253,202,53,1)';
+        else if (colorClass === 'green') borderColor = 'rgba(58,159,72,1)';
     }
 
-    // Draw card background rounded rect
     const outerR = 10 * scale;
     const pad = 8 * scale;
     const cardX = pad;
@@ -344,69 +373,59 @@ function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
     const cardW = w - pad * 2;
     const cardH = h - pad * 2;
 
-    // Draw soft glow by using radial gradient outside edges (simulates CSS box-shadow)
+    // Glow for hover (approximate CSS box-shadow: 0 0 30px rgba(..., 0.9))
     if (isHover) {
-        // Glow parameters (Option 1 exact CSS look: ~30px blur at CSS pixels -> scaled)
-        const glowPx = 30 * scale;
-        // create an offscreen canvas for glow? We'll draw multiple translucent rounded rect strokes to fake blur
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        ctx.shadowBlur = glowPx;
+        ctx.shadowBlur = 30 * scale;
         ctx.shadowColor = (colorClass === 'red') ? 'rgba(239,48,34,0.9)' :
                           (colorClass === 'orange') ? 'rgba(253,202,53,0.9)' :
                           'rgba(58,159,72,0.9)';
-        // draw invisible rect to generate shadow
-        ctx.fillStyle = 'rgba(255,255,255,0.0)';
+        // invisible fill to produce shadow
+        ctx.fillStyle = 'rgba(255,255,255,0)';
         roundRectFill(ctx, cardX, cardY, cardW, cardH, outerR);
         ctx.restore();
     } else {
-        // subtle default shadow
         ctx.save();
         ctx.shadowBlur = 12 * scale;
         ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.fillStyle = baseFill;
         roundRectFill(ctx, cardX, cardY, cardW, cardH, outerR);
         ctx.restore();
     }
 
-    // Fill card with translucent background
+    // Fill translucent card
     ctx.fillStyle = baseFill;
     roundRectFill(ctx, cardX, cardY, cardW, cardH, outerR);
 
-    // Draw border
+    // Border
     ctx.lineWidth = 3 * scale;
     ctx.strokeStyle = borderColor;
     roundRectStroke(ctx, cardX, cardY, cardW, cardH, outerR);
 
-    // Top-row background (approx)
+    // Top row
     ctx.fillStyle = '#f5f5f5';
     const topRowH = 28 * scale;
     roundRectFill(ctx, cardX + 4*scale, cardY + 6*scale, cardW - 8*scale, topRowH, 6*scale);
 
-    // Country & age (top row)
     ctx.fillStyle = '#333';
     ctx.font = `${14 * scale}px Arial`;
     ctx.textBaseline = 'middle';
     ctx.fillText((p.country || ''), cardX + 12*scale, cardY + 6*scale + topRowH / 2);
-    // age right aligned
     const ageText = (p.age || '');
     const ageWidth = ctx.measureText(ageText).width;
     ctx.fillText(ageText, cardX + cardW - 12*scale - ageWidth, cardY + 6*scale + topRowH / 2);
 
-    // Photo box
-    const photoX = cardX + (cardW - 120*scale) / 2;
-    const photoY = cardY + 6*scale + topRowH + 12*scale;
+    // Photo
     const photoW = 120 * scale;
     const photoH = 120 * scale;
-
-    // Photo placeholder
+    const photoX = cardX + (cardW - photoW) / 2;
+    const photoY = cardY + 6*scale + topRowH + 12*scale;
     ctx.fillStyle = '#ddd';
     roundRectFill(ctx, photoX, photoY, photoW, photoH, 6*scale);
 
-    // Draw image if present
     if (imageEl) {
         try {
-            // Fit-cover behavior
+            // cover-crop
             const arImg = imageEl.width / imageEl.height;
             const arBox = photoW / photoH;
             let sx = 0, sy = 0, sw = imageEl.width, sh = imageEl.height;
@@ -426,7 +445,7 @@ function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
             ctx.drawImage(imageEl, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
             ctx.restore();
         } catch (err) {
-            // drawing may fail due to CORS — keep placeholder
+            // ignore — keep placeholder
         }
     }
 
@@ -437,7 +456,7 @@ function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
     const nameY = photoY + photoH + 8*scale;
     ctx.fillText(p.name || '', cardX + 12*scale, nameY);
 
-    // Interest (wrap)
+    // Interest
     ctx.fillStyle = '#fff';
     ctx.font = `${16 * scale}px Arial`;
     const interestY = nameY + 22*scale;
@@ -446,7 +465,6 @@ function drawTileToCanvas(ctx, p, colorClass, imageEl = null, isHover = false) {
     ctx.restore();
 }
 
-// rounded rect fill helper
 function roundRectFill(ctx, x, y, w, h, r) {
     ctx.beginPath();
     const min = Math.min(w/2, h/2, r);
@@ -459,7 +477,6 @@ function roundRectFill(ctx, x, y, w, h, r) {
     ctx.fill();
 }
 
-// rounded rect stroke helper
 function roundRectStroke(ctx, x, y, w, h, r) {
     ctx.beginPath();
     const min = Math.min(w/2, h/2, r);
@@ -472,7 +489,6 @@ function roundRectStroke(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-// rounded rect clip helper
 function roundRectClip(ctx, x, y, w, h, r) {
     ctx.beginPath();
     const min = Math.min(w/2, h/2, r);
@@ -485,7 +501,6 @@ function roundRectClip(ctx, x, y, w, h, r) {
     ctx.clip();
 }
 
-// Helper wrap text
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     if (!text) return;
     const words = text.split(' ');
@@ -506,7 +521,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 }
 
 // -------------------------------
-// Build targets (kept identical)
+// Build targets (identical math)
 // -------------------------------
 function buildTargets(count) {
     targets = { table: [], sphere: [], helix: [], grid: [] };
@@ -567,7 +582,7 @@ function buildTargets(count) {
 }
 
 // -------------------------------
-// Transform (tween positions + rotations) — unchanged logic, just uses mesh objects
+// Transform (tween positions + rotations)
 // -------------------------------
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
@@ -615,9 +630,7 @@ function transform(targetsArray, duration = 1200) {
     needsRender = true;
 }
 
-// -------------------------------
-// UI Buttons
-// -------------------------------
+// Buttons
 document.getElementById('btn-table').onclick = () => transform(targets.table);
 document.getElementById('btn-sphere').onclick = () => transform(targets.sphere);
 document.getElementById('btn-helix').onclick = () => transform(targets.helix);
@@ -637,35 +650,26 @@ function onPointerMove(event) {
     if (hits.length > 0) {
         const mesh = hits[0].object;
         if (lastHover !== mesh) {
-            // clear previous
-            if (lastHover) {
-                setTileHover(lastHover, false);
-            }
-            // set new
+            if (lastHover) setTileHover(lastHover, false);
             setTileHover(mesh, true);
             lastHover = mesh;
         }
     } else {
-        if (lastHover) {
-            setTileHover(lastHover, false);
-            lastHover = null;
-        }
+        if (lastHover) setTileHover(lastHover, false);
+        lastHover = null;
     }
 }
 
-// set hover and re-rasterize single tile
 function setTileHover(mesh, isHover) {
-    // find tile meta
     const meta = tilesMeta.find(m => m.mesh === mesh);
     if (!meta) return;
     if (meta.hover === isHover) return;
     meta.hover = isHover;
 
-    // Update the associated DOM clone's hover state (class) — useful if html2canvas is used
+    // Update DOM clone class (for html2canvas fidelity)
     if (isHover) meta.dom.classList.add('hover-effect');
     else meta.dom.classList.remove('hover-effect');
 
-    // Re-rasterize this tile only
     const idx = tilesMeta.indexOf(meta);
     rasterizeTileToCanvas(idx, isHover).then(() => {
         meta.texture.needsUpdate = true;
@@ -677,25 +681,7 @@ function setTileHover(mesh, isHover) {
 }
 
 // -------------------------------
-// Image loading: try to prefetch each tile's image into an Image object to use in fallback drawing
-// -------------------------------
-function prefetchTileImages() {
-    tilesMeta.forEach((meta, i) => {
-        const url = meta.data.photo;
-        if (!url) return;
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // request CORS — if server allows, great; otherwise onerror
-        img.onload = () => onTileImageLoaded(i, img);
-        img.onerror = () => {
-            // image failed (likely CORS) — we still keep placeholder visuals
-            console.warn('Image load failed (CORS or not found):', url);
-        };
-        img.src = url;
-    });
-}
-
-// -------------------------------
-// Window resize handler
+// Window resize
 // -------------------------------
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -705,25 +691,22 @@ function onWindowResize() {
 }
 
 // -------------------------------
-// Animation loop & throttle (keeps your throttle logic)
+// Animation loop & throttle
 // -------------------------------
-let forceFullRender = true; // used by controls event handlers above
+let forceFullRender = true;
 
 function animate(time) {
     requestAnimationFrame(animate);
 
     const delta = time - lastFrame;
 
-    // Always update controls
     controls.update();
 
-    // Always update tween animations
     if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
     }
 
-    // Throttle render calls (original logic)
     if (delta > 16) {
         lastFrame = time;
 
@@ -736,13 +719,8 @@ function animate(time) {
 }
 
 // -------------------------------
-// Utilities
+// Image proxy helper example (optional):
+// For production, replace the public proxy with your own server-side proxy so you control reliability.
 // -------------------------------
 
-// simple HTML escape (protects text drawn on canvas)
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function (m) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m];
-    });
-}
+// End of file
