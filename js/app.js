@@ -9,7 +9,6 @@ let objects = [];
 let targets = { table: [], sphere: [], helix: [], grid: [] };
 let needsRender = true;  // throttle render cycles
 let lastFrame = 0;
-let transitionController = { progress: 0 };
 
 init();
 loadCSV();
@@ -161,33 +160,38 @@ function buildTargets(count) {
 
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
-
     TWEEN.removeAll();
-    transitionController.progress = 0;
 
-    // Smooth one-tween animation
-    new TWEEN.Tween(transitionController)
-        .to({ progress: 1 }, duration)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .onUpdate(() => {
-            for (let i = 0; i < objects.length; i++) {
-                const obj = objects[i];
-                const target = targetsArray[i];
-                if (!target) continue;
+    const maxStagger = 300;
+    const perItemStagger = 6;
 
-                // LERP position
-                obj.position.lerp(target.position, transitionController.progress);
-                
-                // LERP rotation only if needed (CSS3D rarely needs it)
-                obj.rotation.x = target.rotation.x * transitionController.progress;
-                obj.rotation.y = target.rotation.y * transitionController.progress;
-                obj.rotation.z = target.rotation.z * transitionController.progress;
-            }
+    for (let i = 0; i < objects.length; i++) {
+        const obj = objects[i];
+        const target = targetsArray[i];
+        if (!target) continue;
 
-            needsRender = true;
-        })
-        .onComplete(() => { needsRender = true; })
-        .start();
+        const delay = Math.min(i * perItemStagger, maxStagger);
+
+        new TWEEN.Tween(obj)
+            .to({
+                position: {
+                    x: target.position.x,
+                    y: target.position.y,
+                    z: target.position.z
+                },
+                rotation: {
+                    x: target.rotation.x || 0,
+                    y: target.rotation.y || 0,
+                    z: target.rotation.z || 0
+                }
+            }, duration)
+            .delay(delay)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onStart(() => needsRender = true)
+            .onUpdate(() => needsRender = true)
+            .onComplete(() => needsRender = true)
+            .start();
+    }
 
     needsRender = true;
 }
