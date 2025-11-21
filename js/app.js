@@ -164,12 +164,20 @@ function buildTargets(count) {
     }
 }
 
-function transform(targetsArray) {
-    new TWEEN.Tween({ t: 0 }).to({ t: 1 }, 1000).onUpdate(() => {}).start();
+function transform(targetsArray, duration = 1200) {
+    if (!targetsArray || !objects.length) return;
+    TWEEN.removeAll();
 
-    objects.forEach((obj, i) => {
+    const maxStagger = 300;
+    const perItemStagger = 6;
+
+    for (let i = 0; i < objects.length; i++) {
+        const obj = objects[i];
         const target = targetsArray[i];
-        if (!target) return;
+        if (!target) continue;
+
+        const delay = Math.min(i * perItemStagger, maxStagger);
+
         new TWEEN.Tween(obj)
             .to({
                 position: {
@@ -178,14 +186,20 @@ function transform(targetsArray) {
                     z: target.position.z
                 },
                 rotation: {
-                    x: target.rotation.x,
-                    y: target.rotation.y,
-                    z: target.rotation.z
+                    x: target.rotation.x || 0,
+                    y: target.rotation.y || 0,
+                    z: target.rotation.z || 0
                 }
-            }, 1500)
+            }, duration)
+            .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
             .start();
-    });
+    }
+   
+    new TWEEN.Tween({})
+        .to({}, duration + maxStagger)
+        .onUpdate(function () {})
+        .start();
 }
 
 // Buttons: set camera and controls to suitable positions per view
