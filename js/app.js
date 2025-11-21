@@ -122,8 +122,8 @@ function buildTargets(count) {
     }
 
     const helixRadius = 800;
-    const angleStep = 0.8;
-    const verticalSpacing = 60;
+    const angleStep = 0.4;
+    const verticalSpacing = 200;
     const totalSegments = Math.ceil(count / 2);
     const helixYOffset = (totalSegments - 1) * verticalSpacing / 2;
     window._helixMeta = { radius: helixRadius, totalHeight: totalSegments * verticalSpacing };
@@ -135,7 +135,7 @@ function buildTargets(count) {
         const strandPhase = strand === 0 ? 0 : Math.PI;
         const stagger = strand === 0 ? 0 : angleStep * 0.4;
         const angle = baseAngle + strandPhase + stagger;
-        const strandSeparation = 60;
+        const strandSeparation = 200;
         const radius = helixRadius + (strand === 0 ? -strandSeparation : strandSeparation);
         const helixHeight = pairIndex * verticalSpacing - helixYOffset;
         let obj = new THREE.Object3D();
