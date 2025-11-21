@@ -21,7 +21,7 @@ loadCSV();
 
 function init() {
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 20000);
-    camera.position.set(0, 0, 6000);
+    camera.position.set(0, 0, 4500);
 
     scene = new THREE.Scene();
 
