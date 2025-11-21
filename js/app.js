@@ -174,16 +174,8 @@ function transform(targetsArray, duration = 1200) {
 
         new TWEEN.Tween(obj)
             .to({
-                position: {
-                    x: target.position.x,
-                    y: target.position.y,
-                    z: target.position.z
-                },
-                rotation: {
-                    x: target.rotation.x || 0,
-                    y: target.rotation.y || 0,
-                    z: target.rotation.z || 0
-                }
+                position: target.position,
+                rotation: target.rotation
             }, duration)
             .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
