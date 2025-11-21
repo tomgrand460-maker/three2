@@ -13,7 +13,9 @@ loadCSV();
 
 function init() {
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000);
-    camera.position.z = 2000;
+    camera.position.z = 3500;
+    controls.minDistance = 2000;
+    controls.maxDistance = 8000;
 
     scene = new THREE.Scene();
 
@@ -112,7 +114,12 @@ function buildTargets(count) {
         targets.helix.push(obj);
 
         obj = new THREE.Object3D();
-        obj.position.set((i % 5) * 340 - 600, (Math.floor(i / 5) % 4) * 400 - 400, (Math.floor(i / 20) % 10) * 800 - 2000);
+        const layers = 10;
+        const zGap = 500;
+        const layerIndex = Math.floor(i / 20) % layers;
+        const totalDepth = (layers - 1) * zGap;
+        const centeredZ = layerIndex * zGap - totalDepth / 2;
+        obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 250 - 400, centeredZ);
         targets.grid.push(obj);
     }
 }
@@ -139,11 +146,27 @@ function transform(targets) {
     });
 }
 
-// BUTTONS
+document.getElementById('btn-table').onclick = () => {
+    camera.position.z = 3500;
+    controls.minDistance = 2000;
+    controls.maxDistance = 8000;
+    transform(targets.table);
+};
 
-document.getElementById('btn-table').onclick = () => transform(targets.table);
-document.getElementById('btn-sphere').onclick = () => transform(targets.sphere);
-document.getElementById('btn-helix').onclick = () => transform(targets.helix);
+document.getElementById('btn-sphere').onclick = () => {
+    camera.position.z = 2000;
+    controls.minDistance = 500;
+    controls.maxDistance = 6000;
+    transform(targets.sphere);
+};
+
+document.getElementById('btn-helix').onclick = () => {
+    camera.position.z = 2000;
+    controls.minDistance = 500;
+    controls.maxDistance = 6000;
+    transform(targets.helix);
+};
+
 document.getElementById('btn-grid').onclick = () => transform(targets.grid);
 
 function onWindowResize() {
