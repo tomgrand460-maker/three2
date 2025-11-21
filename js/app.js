@@ -172,6 +172,7 @@ function transform(targetsArray, duration = 1200) {
 
         const delay = Math.min(i * perItemStagger, maxStagger);
 
+        // Position tween (unchanged)
         new TWEEN.Tween(obj.position)
             .to({
                 x: target.position.x,
@@ -184,16 +185,17 @@ function transform(targetsArray, duration = 1200) {
             .onUpdate(setNeedsRender)
             .start();
 
+        // Rotation tween using quaternions (less computation & avoids gimbal lock)
         const targetQuat = new THREE.Quaternion().copy(target.quaternion);
-        const currentQuat = new THREE.Quaternion().copy(obj.quaternion);
+        const startQuat = new THREE.Quaternion().copy(obj.quaternion); // Copy initial quaternion
 
-        const qTween = { t: 0 };
+        const qTween = { t: 0 }; // interpolation factor object
         new TWEEN.Tween(qTween)
             .to({ t: 1 }, duration)
             .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
             .onUpdate(() => {
-                THREE.Quaternion.slerp(currentQuat, targetQuat, obj.quaternion, qTween.t);
+                obj.quaternion.copy(startQuat).slerp(targetQuat, qTween.t); // Interpolate from startQuat
                 needsRender = true;
             })
             .start();
