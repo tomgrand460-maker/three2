@@ -12,10 +12,8 @@ init();
 loadCSV();
 
 function init() {
-    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000);
-    camera.position.z = 3500;
-    controls.minDistance = 2000;
-    controls.maxDistance = 8000;
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.z = 2000;
 
     scene = new THREE.Scene();
 
@@ -26,6 +24,12 @@ function init() {
     controls = new TrackballControls(camera, renderer.domElement);
     controls.minDistance = 500;
     controls.maxDistance = 6000;
+    controls.rotateSpeed = 2.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.addEventListener('change', render);
+
+    animate();
 
     window.addEventListener('resize', onWindowResize);
 }
@@ -147,27 +151,36 @@ function transform(targets) {
 }
 
 document.getElementById('btn-table').onclick = () => {
-    camera.position.z = 3500;
+    camera.position.set(0, 0, 3500);
     controls.minDistance = 2000;
-    controls.maxDistance = 8000;
+    controls.maxDistance = 10000;
+    controls.update();
     transform(targets.table);
 };
 
 document.getElementById('btn-sphere').onclick = () => {
-    camera.position.z = 2000;
+    camera.position.set(0, 0, 2000);
     controls.minDistance = 500;
     controls.maxDistance = 6000;
+    controls.update();
     transform(targets.sphere);
 };
 
 document.getElementById('btn-helix').onclick = () => {
-    camera.position.z = 2000;
+    camera.position.set(0, 0, 2200);
     controls.minDistance = 500;
     controls.maxDistance = 6000;
+    controls.update();
     transform(targets.helix);
 };
 
-document.getElementById('btn-grid').onclick = () => transform(targets.grid);
+document.getElementById('btn-grid').onclick = () => {
+    camera.position.set(0, 0, 2000);
+    controls.minDistance = 500;
+    controls.maxDistance = 6000;
+    controls.update();
+    transform(targets.grid);
+};
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
