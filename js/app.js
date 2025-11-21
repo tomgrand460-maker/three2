@@ -169,10 +169,13 @@ function transform(targetsArray, duration = 1200) {
     objects.forEach((obj, i) => {
         const target = targetsArray[i];
         if (!target) return;
-    
+        
+        const targetRotation = {
+            x: target.rotation.x,
+            y: target.rotation.y,
+            z: target.rotation.z
+        };
         const delay = Math.min(i * perItemStagger, maxStagger);
-    
-        const targetRotation = target.rotation || { x: 0, y: 0, z: 0 };
     
         new TWEEN.Tween(obj)
             .to({ position: target.position, rotation: targetRotation }, duration)
