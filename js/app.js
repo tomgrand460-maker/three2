@@ -8,6 +8,7 @@ let camera, scene, renderer, controls;
 let objects = [];
 let targets = { table: [], sphere: [], helix: [], grid: [] };
 let needsRender = true;  // throttle render cycles
+let lastFrame = 0;
 
 init();
 loadCSV();
@@ -207,7 +208,6 @@ function onWindowResize() {
     needsRender = true;
 }
 
-let lastFrame = 0;
 function animate(time) {
     requestAnimationFrame(animate);
 
