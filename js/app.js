@@ -106,7 +106,6 @@ function buildTargets(count) {
     // Table layout
     for (let i = 0; i < count; i++) {
         let obj;
-
         obj = new THREE.Object3D();
         obj.position.set((i % 20) * 220 - 2200, -(Math.floor(i / 20) % 10) * 260 + 1200, 0);
         targets.table.push(obj);
@@ -191,7 +190,7 @@ function transform(targetsArray) {
 
 // Buttons: set camera and controls to suitable positions per view
 document.getElementById('btn-table').onclick = () => {
-    camera.position.set(0, 0, 9000);
+    camera.position.set(0, 0, 4500);
     controls.target.set(0, 0, 0);
     controls.minDistance = 10;
     controls.maxDistance = 30000;
@@ -209,10 +208,7 @@ document.getElementById('btn-sphere').onclick = () => {
 };
 
 document.getElementById('btn-helix').onclick = () => {
-    // Use stored helix meta to compute a camera distance that frames the whole double-helix
-    const meta = window._helixMeta || { radius: 800, totalHeight: 1000 };
-    const cameraDist = Math.max(meta.radius * 3.2, meta.totalHeight * 1.1, 4500);
-    camera.position.set(0, 0, cameraDist);
+    camera.position.set(0, 0, 4500);
     controls.target.set(0, 0, 0);
     controls.minDistance = 5;
     controls.maxDistance = 40000;
@@ -221,7 +217,7 @@ document.getElementById('btn-helix').onclick = () => {
 };
 
 document.getElementById('btn-grid').onclick = () => {
-    camera.position.set(0, 0, 7000);
+    camera.position.set(0, 0, 4500);
     controls.target.set(0, 0, 0);
     controls.minDistance = 5;
     controls.maxDistance = 30000;
