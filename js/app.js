@@ -129,6 +129,7 @@ function buildTargets(count) {
     window._helixMeta = { radius: helixRadius, totalHeight: totalSegments * verticalSpacing };
 
     for (let i = 0; i < count; i++) {
+        const strand = i % 2;
         const pairIndex = Math.floor(i / 2);
         const baseAngle = pairIndex * angleStep;
         const strandPhase = strand === 0 ? 0 : Math.PI;
