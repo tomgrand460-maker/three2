@@ -125,8 +125,8 @@ function buildTargets(count) {
 
     // Helix: clearer double-helix settings
     const helixRadius = 800;         // larger to separate strands
-    const angleStep = 0.6;           // angular step per pair
-    const verticalSpacing = 36;      // vertical distance per pair
+    const angleStep = 0.8;           // angular step per pair
+    const verticalSpacing = 60;      // vertical distance per pair
     const totalSegments = Math.ceil(count / 2);
     const helixYOffset = (totalSegments - 1) * verticalSpacing / 2;
     // expose meta so we can pick a camera distance later
