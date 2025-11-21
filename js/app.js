@@ -213,16 +213,16 @@ function animate(time) {
 
     const delta = time - lastFrame;
 
-    // Always update camera controls
+    // Always update controls
     controls.update();
 
-    // Always update tweens
+    // Always update tween animations
     if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
     }
 
-    // Throttle ONLY rendering (not logic)
+    // Throttle only the render calls
     if (delta > 16) {
         lastFrame = time;
 
