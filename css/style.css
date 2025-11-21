@@ -60,9 +60,8 @@ body {
 .tile {
     width: 180px;
     height: 240px;
-    border: 3px solid rgba(255,255,255,0.35);
-    border-radius: 10px;
     backdrop-filter: blur(4px);
+	box-shadow: 0px 0px 12px rgba(0,255,255,0.5);
     padding: 10px;
     box-sizing: border-box;
     text-align: center;
@@ -73,9 +72,38 @@ body {
     opacity: 0.92;
 }
 
-.tile.red { background: rgba(239, 48, 34, 0.35); }
-.tile.orange { background: rgba(253, 202, 53, 0.35); }
-.tile.green { background: rgba(58, 159, 72, 0.35); }
+.tile.red { 
+    border: 3px solid rgba(239, 48, 34, 0.75);
+    border-radius: 10px;
+    background: rgba(239, 48, 34, 0.35); 
+}
+
+.tile.orange {
+    border: 3px solid rgba(253, 202, 53, 0.75);
+    border-radius: 10px;
+    background: rgba(253, 202, 53, 0.35); 
+}
+
+.tile.green { 
+    border: 3px solid rgba(58, 159, 72, 0.75);
+    border-radius: 10px;
+    background: rgba(58, 159, 72, 0.35); 
+}
+
+.tile.red:hover {
+    box-shadow: 0px 0px 12px rgba(239, 48, 34, 0.75);
+    border: 1px solid rgba(239, 48, 34, 1);
+}
+
+.tile.orange:hover {
+    box-shadow: 0px 0px 12px rgba(253, 202, 53, 0.75);
+    border: 1px solid rgba(253, 202, 53, 1);
+}
+
+.tile.red:hover {
+    box-shadow: 0px 0px 12px rgba(58, 159, 72, 0.75);
+    border: 1px solid rgba(58, 159, 72, 1);
+}
 
 .top-row {
     display: flex;
