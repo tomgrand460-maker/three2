@@ -120,3 +120,19 @@ body {
     -ms-user-select: none;
     user-select: none;
 }
+
+img, 
+img::selection, 
+*::selection {
+    pointer-events: none !important;
+    -webkit-user-drag: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+.tile,
+.tile * {
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+}
