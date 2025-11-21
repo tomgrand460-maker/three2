@@ -36,8 +36,9 @@ async function loadCSV() {
         header: false,
         skipEmptyLines: true,
         complete: function (results) {
-            const rows = results.data;
-
+            let rows = results.data;
+            rows.shift();
+    
             const parsed = rows.map(parts => ({
                 name: parts[0],
                 photo: parts[1],
@@ -46,7 +47,7 @@ async function loadCSV() {
                 interest: parts[4],
                 net: parts[5]
             }));
-
+    
             buildTiles(parsed);
             buildTargets(parsed.length);
             transform(targets.table);
