@@ -190,38 +190,18 @@ function transform(targetsArray) {
 
 // Buttons: set camera and controls to suitable positions per view
 document.getElementById('btn-table').onclick = () => {
-    camera.position.set(0, 0, 4500);
-    controls.target.set(0, 0, 0);
-    controls.minDistance = 10;
-    controls.maxDistance = 30000;
-    controls.update();
     transform(targets.table);
 };
 
 document.getElementById('btn-sphere').onclick = () => {
-    camera.position.set(0, 0, 4500);
-    controls.target.set(0, 0, 0);
-    controls.minDistance = 10;
-    controls.maxDistance = 20000;
-    controls.update();
     transform(targets.sphere);
 };
 
 document.getElementById('btn-helix').onclick = () => {
-    camera.position.set(0, 0, 4500);
-    controls.target.set(0, 0, 0);
-    controls.minDistance = 5;
-    controls.maxDistance = 40000;
-    controls.update();
     transform(targets.helix);
 };
 
 document.getElementById('btn-grid').onclick = () => {
-    camera.position.set(0, 0, 4500);
-    controls.target.set(0, 0, 0);
-    controls.minDistance = 5;
-    controls.maxDistance = 30000;
-    controls.update();
     transform(targets.grid);
 };
 
