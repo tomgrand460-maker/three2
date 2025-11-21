@@ -122,7 +122,7 @@ function buildTargets(count) {
     }
 
     const helixRadius = 800;
-    const angleStep = 0.1;
+    const angleStep = 0.3;
     const verticalSpacing = 160;
     const totalSegments = Math.ceil(count / 2);
     const helixYOffset = (totalSegments - 1) * verticalSpacing / 2;
