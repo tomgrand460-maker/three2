@@ -94,51 +94,35 @@ function buildTiles(data) {
 
 function buildTargets(count) {
     for (let i = 0; i < count; i++) {
-        let obj = new THREE.Object3D();
-        const tableXGap = 160;
-        const tableYGap = 200;
-        obj.position.set(
-            (i % 20) * tableXGap - (20 * tableXGap) / 2,
-            -(Math.floor(i / 20) % 10) * tableYGap + (10 * tableYGap) / 2,
-            -1500
-        );
+        let obj;
+
+        obj = new THREE.Object3D();
+        obj.position.set((i % 20) * 220 - 2200, -(Math.floor(i / 20) % 10) * 260 + 1200, 0);
         targets.table.push(obj);
 
         const phi = Math.acos(-1 + (2 * i) / count);
         const theta = Math.sqrt(count * Math.PI) * phi;
         obj = new THREE.Object3D();
-        obj.position.set(
-            1400 * Math.cos(theta) * Math.sin(phi),
-            1400 * Math.sin(theta) * Math.sin(phi),
-            1400 * Math.cos(phi)
-        );
-        obj.lookAt(obj.position.clone().multiplyScalar(2));
+        obj.position.set(1400 * Math.cos(theta) * Math.sin(phi), 1400 * Math.sin(theta) * Math.sin(phi), 1400 * Math.cos(phi));
+        obj.lookAt(new THREE.Vector3(obj.position.x * 2, obj.position.y * 2, obj.position.z * 2));
         targets.sphere.push(obj);
-
+        
         const helixRadius = 700;
         const angle = i * 0.25;
         const helixHeight = 30 * i - 2000;
         obj = new THREE.Object3D();
         const angleShift = (i % 2 === 0) ? 0 : Math.PI;
-
-        obj.position.set(
-            helixRadius * Math.cos(angle + angleShift),
-            helixHeight,
-            helixRadius * Math.sin(angle + angleShift)
-        );
+        obj.position.set(helixRadius * Math.cos(angle + angleShift), helixHeight, helixRadius * Math.sin(angle + angleShift));
         obj.lookAt(new THREE.Vector3(0, helixHeight, 0));
         targets.helix.push(obj);
 
         obj = new THREE.Object3D();
         const layers = 10;
-        const zGap = 250;
-        const totalDepth = (layers - 1) * zGap;
+        const zGap = 500;
         const layerIndex = Math.floor(i / 20) % layers;
-        obj.position.set(
-            (i % 5) * 300 - 600,
-            (Math.floor(i / 5) % 4) * 250 - 400,
-            layerIndex * zGap - totalDepth / 2 - 1200
-        );
+        const totalDepth = (layers - 1) * zGap;
+        const centeredZ = layerIndex * zGap - totalDepth / 2;
+        obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 250 - 400, centeredZ);
         targets.grid.push(obj);
     }
 }
