@@ -102,7 +102,7 @@ body {
     border: 3px solid rgba(253, 202, 53, 1);
 }
 
-.tile.red:hover {
+.tile.green:hover {
     box-shadow: 0px 0px 12px rgba(58, 159, 72, 0.75);
     border: 3px solid rgba(58, 159, 72, 1);
 }
