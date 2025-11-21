@@ -7,6 +7,7 @@ const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdQ8324RdvqZwBj
 let camera, scene, renderer, controls;
 let objects = [];
 let targets = { table: [], sphere: [], helix: [], grid: [] };
+let needsRender = true;  // throttle render cycles
 
 init();
 loadCSV();
@@ -28,10 +29,11 @@ function init() {
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.target.set(0, 0, 0);
-    controls.update();
+    controls.addEventListener('change', () => {
+        needsRender = true;   // only render when user moves
+    });
 
     animate();
-
     window.addEventListener('resize', onWindowResize);
 }
 
@@ -58,7 +60,6 @@ async function loadCSV() {
             buildTiles(parsed);
             buildTargets(parsed.length);
             transform(targets.table);
-            animate();
         }
     });
 }
@@ -71,7 +72,7 @@ function netColor(v) {
 }
 
 function buildTiles(data) {
-    data.forEach((p, i) => {
+    data.forEach((p) => {
         const div = document.createElement('div');
         div.className = `tile ${netColor(p.net)}`;
 
@@ -89,68 +90,68 @@ function buildTiles(data) {
         object.position.x = Math.random() * 4000 - 2000;
         object.position.y = Math.random() * 4000 - 2000;
         object.position.z = Math.random() * 4000 - 2000;
+
         scene.add(object);
         objects.push(object);
     });
+
+    needsRender = true;
 }
 
 function buildTargets(count) {
-    // Table layout
+    // (UNMODIFIED — all your layouts kept exactly)
     for (let i = 0; i < count; i++) {
-        let obj;
-        obj = new THREE.Object3D();
+        let obj = new THREE.Object3D();
         obj.position.set((i % 20) * 220 - 2200, -(Math.floor(i / 20) % 10) * 260 + 1200, 0);
         targets.table.push(obj);
     }
 
-    // Sphere (Fibonacci) — offset index by 0.5 to avoid exact poles clustering
     for (let i = 0; i < count; i++) {
         let obj;
         const phi = Math.acos(-1 + (2 * (i + 0.5)) / count);
         const theta = Math.sqrt(count * Math.PI) * phi;
         obj = new THREE.Object3D();
-        obj.position.set(1400 * Math.cos(theta) * Math.sin(phi), 1400 * Math.sin(theta) * Math.sin(phi), 1400 * Math.cos(phi));
+        obj.position.set(
+            1400 * Math.cos(theta) * Math.sin(phi),
+            1400 * Math.sin(theta) * Math.sin(phi),
+            1400 * Math.cos(phi)
+        );
         obj.lookAt(new THREE.Vector3(obj.position.x * 2, obj.position.y * 2, obj.position.z * 2));
         targets.sphere.push(obj);
     }
 
-    // Helix: clearer double-helix settings
-    const helixRadius = 800;         // larger to separate strands
-    const angleStep = 0.8;           // angular step per pair
-    const verticalSpacing = 60;      // vertical distance per pair
+    const helixRadius = 800;
+    const angleStep = 0.8;
+    const verticalSpacing = 60;
     const totalSegments = Math.ceil(count / 2);
     const helixYOffset = (totalSegments - 1) * verticalSpacing / 2;
-    // expose meta so we can pick a camera distance later
     window._helixMeta = { radius: helixRadius, totalHeight: totalSegments * verticalSpacing };
 
     for (let i = 0; i < count; i++) {
-        let obj;
-        const strand = i % 2;              // strand 0 or 1
-        const pairIndex = Math.floor(i / 2); // which rung/pair vertically
+        const strand = i % 2;
+        const pairIndex = Math.floor(i / 2);
         const baseAngle = pairIndex * angleStep;
-        // make second strand roughly opposite but slightly staggered so tiles don't collide
         const strandPhase = strand === 0 ? 0 : Math.PI;
         const stagger = strand === 0 ? 0 : angleStep * 0.4;
         const angle = baseAngle + strandPhase + stagger;
         const strandSeparation = 60;
         const radius = helixRadius + (strand === 0 ? -strandSeparation : strandSeparation);
         const helixHeight = pairIndex * verticalSpacing - helixYOffset;
-        obj = new THREE.Object3D();
+        let obj = new THREE.Object3D();
         obj.position.set(radius * Math.cos(angle), helixHeight, radius * Math.sin(angle));
         obj.lookAt(new THREE.Vector3(0, helixHeight, 0));
         targets.helix.push(obj);
     }
 
-    // Grid — layers along Z axis; smaller zGap so layers are closer and easier to inspect individually
-    const layers = Math.ceil(count / 20); // compute how many layers needed (or you can set fixed)
-    const zGap = 400; // reduced gap so zooming between layers is easier
-    const itemsPerLayer = 20; // keep consistent with table grouping
+    const layers = Math.ceil(count / 20);
+    const zGap = 400;
+    const itemsPerLayer = 20;
     const totalDepth = (layers - 1) * zGap;
+
     for (let i = 0; i < count; i++) {
-        let obj;
         const layerIndex = Math.floor(i / itemsPerLayer);
         const centeredZ = layerIndex * zGap - totalDepth / 2;
-        obj = new THREE.Object3D();
+        let obj = new THREE.Object3D();
         obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 400 - 400, centeredZ);
         targets.grid.push(obj);
     }
@@ -185,41 +186,44 @@ function transform(targetsArray, duration = 1200) {
             }, duration)
             .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
+            .onStart(() => needsRender = true)
+            .onUpdate(() => needsRender = true)
+            .onComplete(() => needsRender = true)
             .start();
     }
-   
-    new TWEEN.Tween({})
-        .to({}, duration + maxStagger)
-        .onUpdate(function () {})
-        .start();
+
+    needsRender = true;
 }
 
-// Buttons: set camera and controls to suitable positions per view
-document.getElementById('btn-table').onclick = () => {
-    transform(targets.table);
-};
-
-document.getElementById('btn-sphere').onclick = () => {
-    transform(targets.sphere);
-};
-
-document.getElementById('btn-helix').onclick = () => {
-    transform(targets.helix);
-};
-
-document.getElementById('btn-grid').onclick = () => {
-    transform(targets.grid);
-};
+document.getElementById('btn-table').onclick = () => transform(targets.table);
+document.getElementById('btn-sphere').onclick = () => transform(targets.sphere);
+document.getElementById('btn-helix').onclick = () => transform(targets.helix);
+document.getElementById('btn-grid').onclick = () => transform(targets.grid);
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    needsRender = true;
 }
 
-function animate() {
+let lastFrame = 0;
+function animate(time) {
     requestAnimationFrame(animate);
-    TWEEN.update();
-    controls.update();
-    renderer.render(scene, camera);
+
+    // throttle to ~60fps
+    if (time - lastFrame < 16) return;
+    lastFrame = time;
+
+    const tweensActive = TWEEN.getAll().length > 0;
+
+    if (tweensActive) {
+        TWEEN.update(time);
+        needsRender = true;
+    }
+
+    if (needsRender) {
+        renderer.render(scene, camera);
+        needsRender = false;
+    }
 }
