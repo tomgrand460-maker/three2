@@ -122,7 +122,7 @@ function buildTargets(count) {
         const layerIndex = Math.floor(i / 20) % layers;
         const totalDepth = (layers - 1) * zGap;
         const centeredZ = layerIndex * zGap - totalDepth / 2;
-        obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 250 - 400, centeredZ);
+        obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 400 - 400, centeredZ);
         targets.grid.push(obj);
     }
 }
