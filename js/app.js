@@ -111,7 +111,7 @@ function buildTargets(count) {
         targets.helix.push(obj);
 
         obj = new THREE.Object3D();
-        obj.position.set((i % 5) * 300 - 600, (Math.floor(i / 5) % 4) * 320 - 400, (Math.floor(i / 20) % 10) * 400 - 2000);
+        obj.position.set((i % 5) * 340 - 600, (Math.floor(i / 5) % 4) * 400 - 400, (Math.floor(i / 20) % 10) * 800 - 2000);
         targets.grid.push(obj);
     }
 }
