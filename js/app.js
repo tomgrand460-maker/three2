@@ -164,34 +164,25 @@ function transform(targetsArray, duration = 1200) {
 
     const maxStagger = 300;
     const perItemStagger = 6;
+    const setNeedsRender = () => needsRender = true;
 
-    for (let i = 0; i < objects.length; i++) {
-        const obj = objects[i];
+    objects.forEach((obj, i) => {
         const target = targetsArray[i];
-        if (!target) continue;
-
+        if (!target) return;
+    
         const delay = Math.min(i * perItemStagger, maxStagger);
-
+    
+        const targetRotation = target.rotation || { x: 0, y: 0, z: 0 };
+    
         new TWEEN.Tween(obj)
-            .to({
-                position: {
-                    x: target.position.x,
-                    y: target.position.y,
-                    z: target.position.z
-                },
-                rotation: {
-                    x: target.rotation.x || 0,
-                    y: target.rotation.y || 0,
-                    z: target.rotation.z || 0
-                }
-            }, duration)
+            .to({ position: target.position, rotation: targetRotation }, duration)
             .delay(delay)
             .easing(TWEEN.Easing.Cubic.InOut)
-            .onStart(() => needsRender = true)
-            .onUpdate(() => needsRender = true)
-            .onComplete(() => needsRender = true)
+            .onStart(setNeedsRender)
+            .onUpdate(setNeedsRender)
+            .onComplete(setNeedsRender)
             .start();
-    }
+    });
 
     needsRender = true;
 }
