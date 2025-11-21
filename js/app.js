@@ -91,19 +91,19 @@ function buildTargets(count) {
         let obj;
 
         obj = new THREE.Object3D();
-        obj.position.set((i % 20) * 140 - 1400, -(Math.floor(i / 20) % 10) * 180 + 800, 0);
+        obj.position.set((i % 20) * 220 - 2200, -(Math.floor(i / 20) % 10) * 260 + 1200, 0);
         targets.table.push(obj);
 
         const phi = Math.acos(-1 + (2 * i) / count);
         const theta = Math.sqrt(count * Math.PI) * phi;
         obj = new THREE.Object3D();
-        obj.position.set(800 * Math.cos(theta) * Math.sin(phi), 800 * Math.sin(theta) * Math.sin(phi), 800 * Math.cos(phi));
+        obj.position.set(1400 * Math.cos(theta) * Math.sin(phi), 1400 * Math.sin(theta) * Math.sin(phi), 1400 * Math.cos(phi));
         obj.lookAt(new THREE.Vector3(obj.position.x * 2, obj.position.y * 2, obj.position.z * 2));
         targets.sphere.push(obj);
         
-        const helixRadius = 500;
-        const angle = i * 0.4;
-        const helixHeight = 12 * i - 1500;
+        const helixRadius = 700;
+        const angle = i * 0.25;
+        const helixHeight = 30 * i - 2000;
         obj = new THREE.Object3D();
         const angleShift = (i % 2 === 0) ? 0 : Math.PI;
         obj.position.set(helixRadius * Math.cos(angle + angleShift), helixHeight, helixRadius * Math.sin(angle + angleShift));
@@ -120,17 +120,21 @@ function transform(targets) {
     new TWEEN.Tween({ t: 0 }).to({ t: 1 }, 1000).onUpdate(() => {}).start();
 
     objects.forEach((obj, i) => {
-        new TWEEN.Tween(obj.position).to({
-            x: targets[i].position.x,
-            y: targets[i].position.y,
-            z: targets[i].position.z
-        }, 2000).easing(TWEEN.Easing.Exponential.InOut).start();
-
-        new TWEEN.Tween(obj.rotation).to({
-            x: targets[i].rotation.x,
-            y: targets[i].rotation.y,
-            z: targets[i].rotation.z
-        }, 2000).easing(TWEEN.Easing.Exponential.InOut).start();
+        new TWEEN.Tween(obj)
+            .to({
+                position: {
+                    x: targets[i].position.x,
+                    y: targets[i].position.y,
+                    z: targets[i].position.z
+                },
+                rotation: {
+                    x: targets[i].rotation.x,
+                    y: targets[i].rotation.y,
+                    z: targets[i].rotation.z
+                }
+            }, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
     });
 }
 
