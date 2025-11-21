@@ -122,24 +122,21 @@ function buildTargets(count) {
     }
 
     const helixRadius = 800;
-    const angleStep = 0.4;
-    const verticalSpacing = 200;
+    const angleStep = 0.5;
+    const verticalSpacing = 100;
     const totalSegments = Math.ceil(count / 2);
     const helixYOffset = (totalSegments - 1) * verticalSpacing / 2;
     window._helixMeta = { radius: helixRadius, totalHeight: totalSegments * verticalSpacing };
 
     for (let i = 0; i < count; i++) {
-        const strand = i % 2;
         const pairIndex = Math.floor(i / 2);
         const baseAngle = pairIndex * angleStep;
         const strandPhase = strand === 0 ? 0 : Math.PI;
         const stagger = strand === 0 ? 0 : angleStep * 0.4;
         const angle = baseAngle + strandPhase + stagger;
-        const strandSeparation = 200;
-        const radius = helixRadius + (strand === 0 ? -strandSeparation : strandSeparation);
         const helixHeight = pairIndex * verticalSpacing - helixYOffset;
         let obj = new THREE.Object3D();
-        obj.position.set(radius * Math.cos(angle), helixHeight, radius * Math.sin(angle));
+        obj.position.set(helixRadius * Math.cos(angle), helixHeight, helixRadius * Math.sin(angle));
         obj.lookAt(new THREE.Vector3(0, helixHeight, 0));
         targets.helix.push(obj);
     }
