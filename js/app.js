@@ -215,6 +215,8 @@ function animate(time) {
     if (time - lastFrame < 16) return;
     lastFrame = time;
 
+    controls.update();   // <-- THIS MUST BE HERE
+
     const tweensActive = TWEEN.getAll().length > 0;
 
     if (tweensActive) {
