@@ -69,6 +69,8 @@ body {
     flex-direction: column;
     justify-content: space-between;
     opacity: 0.92;
+    will-change: transform;
+    transform-style: preserve-3d;
 }
 
 .tile.red { 
