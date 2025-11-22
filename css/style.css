@@ -186,7 +186,5 @@ body.transitioning .tile {
 }
 
 body.transitioning .tile:hover {
-    background: inherit !important;
-    border-color: inherit !important;
     box-shadow: none !important;
 }
