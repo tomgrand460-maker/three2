@@ -30,10 +30,9 @@ function init() {
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.target.set(0, 0, 0);
-    controls.addEventListener('change', () => {
-        needsRender = true;   // only render when user moves
-    });
-
+    renderer.domElement.addEventListener("pointerdown", () => controls.enabled = true);
+    renderer.domElement.addEventListener("pointerup", () => controls.enabled = false);
+    controls.addEventListener("change", () => needsRender = true);
     animate();
     window.addEventListener('resize', onWindowResize);
 }
@@ -166,34 +165,34 @@ function transform(targetsArray, duration = 1200) {
 
     objects.forEach((obj, i) => {
         const target = targetsArray[i];
-        if (!target) return;
-
-        const delay = Math.min(i * perItemStagger, maxStagger);
-
-        // Position tween (unchanged)
-        new TWEEN.Tween(obj.position)
-            .to({
-                x: target.position.x,
-                y: target.position.y,
-                z: target.position.z
-            }, duration)
-            .delay(delay)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .onStart(setNeedsRender)
-            .onUpdate(setNeedsRender)
-            .start();
-
-        // Rotation tween using quaternions (less computation & avoids gimbal lock)
-        const targetQuat = new THREE.Quaternion().copy(target.quaternion);
-        const startQuat = new THREE.Quaternion().copy(obj.quaternion); // Copy initial quaternion
-
-        const qTween = { t: 0 }; // interpolation factor object
-        new TWEEN.Tween(qTween)
-            .to({ t: 1 }, duration)
-            .delay(delay)
+    
+        const start = {
+            px: obj.position.x,
+            py: obj.position.y,
+            pz: obj.position.z,
+            qx: obj.quaternion.x,
+            qy: obj.quaternion.y,
+            qz: obj.quaternion.z,
+            qw: obj.quaternion.w,
+        };
+    
+        const end = {
+            px: target.position.x,
+            py: target.position.y,
+            pz: target.position.z,
+            qx: target.quaternion.x,
+            qy: target.quaternion.y,
+            qz: target.quaternion.z,
+            qw: target.quaternion.w,
+        };
+    
+        new TWEEN.Tween(start)
+            .to(end, duration)
+            .delay(i * 5)
             .easing(TWEEN.Easing.Cubic.InOut)
             .onUpdate(() => {
-                obj.quaternion.copy(startQuat).slerp(targetQuat, qTween.t); // Interpolate from startQuat
+                obj.position.set(start.px, start.py, start.pz);
+                obj.quaternion.set(start.qx, start.qy, start.qz, start.qw);
                 needsRender = true;
             })
             .start();
@@ -219,8 +218,7 @@ function animate(time) {
 
     const delta = time - lastFrame;
 
-    // Always update controls
-    controls.update();
+    if (controls.enabled) controls.update();
 
     // Always update tween animations
     if (TWEEN.getAll().length > 0) {
