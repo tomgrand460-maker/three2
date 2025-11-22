@@ -184,8 +184,8 @@ function transform(targetsArray, duration = 1200) {
         .easing(TWEEN.Easing.Cubic.InOut)
         .onUpdate(() => {
             for (let i = 0; i < objects.length; i++) {
-                objects[i].position.lerpVectors(startPos[i], endPos[i], lerpState.t);
-                objects[i].quaternion.slerpQuaternions(startQuat[i], endQuat[i], lerpState.t);
+                new TWEEN.Tween(obj.position).to(target.position, duration).start();
+                new TWEEN.Tween(obj.quaternion).to(target.quaternion, duration).start();
             }
             needsRender = true;
         })
