@@ -31,8 +31,7 @@ function init() {
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.target.set(0, 0, 0);
-    renderer.domElement.addEventListener("pointerdown", () => controls.enabled = true);
-    renderer.domElement.addEventListener("pointerup", () => controls.enabled = false);
+    controls.enabled = true;
     controls.addEventListener("change", () => needsRender = true);
     animate();
     window.addEventListener('resize', onWindowResize);
