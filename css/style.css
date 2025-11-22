@@ -180,7 +180,6 @@ body.transitioning #container {
 }
 
 body.transitioning .tile {
-    visibility: hidden !important;
     box-shadow: none !important;
     filter: none !important;
     transition: none !important;
@@ -190,6 +189,4 @@ body.transitioning .tile:hover {
     background: inherit !important;
     border-color: inherit !important;
     box-shadow: none !important;
-    transform: none !important;
-    transition: none !important;
 }
