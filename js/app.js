@@ -25,13 +25,22 @@ function init() {
 
     controls = new TrackballControls(camera, renderer.domElement);
     controls.minDistance = 600;
-    controls.maxDistance = 20000;
+    controls.maxDistance = 10000;
     controls.rotateSpeed = 2.0;
     controls.zoomSpeed = 1.2;
     controls.panSpeed = 0.8;
     controls.target.set(0, 0, 0);
     controls.enabled = true;
-    controls.addEventListener("change", () => needsRender = true);
+    controls.addEventListener("change", () => {
+        const minDistance = 600;
+        const maxDistance = 10000;
+        const dist = camera.position.length();
+    
+        if (dist < minDistance) camera.position.setLength(minDistance);
+        if (dist > maxDistance) camera.position.setLength(maxDistance);
+    
+        needsRender = true;
+    });
     animate();
     window.addEventListener('resize', onWindowResize);
 }
@@ -76,6 +85,7 @@ function buildTiles(data) {
         div.className = `tile ${netColor(p.net)}`;
         div.style.transformStyle = "preserve-3d";
         div.style.willChange = "transform";
+        div.style.overflow = "hidden";
         div.innerHTML = `
             <div class="top-row">
                 <span class="country">${p.country}</span>
@@ -209,8 +219,23 @@ function onWindowResize() {
     needsRender = true;
 }
 
-function animate(time) {
-    requestAnimationFrame(animate);
+function animate(time) {r
+    equestAnimationFrame(animate);
+
+    const frustum = new THREE.Frustum();
+    camera.updateMatrixWorld();
+    frustum.setFromProjectionMatrix(
+        new THREE.Matrix4().multiplyMatrices(
+            camera.projectionMatrix,
+            camera.matrixWorldInverse
+        )
+    );
+
+    for (const o of objects) {
+        o.element.style.visibility =
+            frustum.containsPoint(o.position) ? "visible" : "hidden";
+    }
+
     const delta = time - lastFrame;
     if (controls.enabled) {
         controls.update();
