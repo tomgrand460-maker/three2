@@ -120,7 +120,7 @@ function buildTargets(count) {
         targets.sphere.push(obj);
     }
 
-    const helixRadius = 800;
+    const helixRadius = 650;
     const angleStep = 0.25;
     const verticalSpacing = 40;
     const totalSegments = Math.ceil(count / 2);
@@ -158,47 +158,25 @@ function buildTargets(count) {
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
     TWEEN.removeAll();
-
-    const setNeedsRender = () => needsRender = true;
-    const maxStagger = 300;
-    const perItemStagger = 6;
+    const startPos = [];
+    const endPos = [];
 
     objects.forEach((obj, i) => {
-        const target = targetsArray[i];
-    
-        const start = {
-            px: obj.position.x,
-            py: obj.position.y,
-            pz: obj.position.z,
-            qx: obj.quaternion.x,
-            qy: obj.quaternion.y,
-            qz: obj.quaternion.z,
-            qw: obj.quaternion.w,
-        };
-    
-        const end = {
-            px: target.position.x,
-            py: target.position.y,
-            pz: target.position.z,
-            qx: target.quaternion.x,
-            qy: target.quaternion.y,
-            qz: target.quaternion.z,
-            qw: target.quaternion.w,
-        };
-    
-        new TWEEN.Tween(start)
-            .to(end, duration)
-            .delay(i * 5)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .onUpdate(() => {
-                obj.position.set(start.px, start.py, start.pz);
-                obj.quaternion.set(start.qx, start.qy, start.qz, start.qw);
-                needsRender = true;
-            })
-            .start();
+        startPos[i] = obj.position.clone();
+        endPos[i]   = targetsArray[i].position.clone();
     });
 
-    needsRender = true;
+    new TWEEN.Tween(lerpState)
+        .to({ t: 1 }, duration)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .onUpdate(() => {
+            objects.forEach((obj, i) => {
+                obj.position.lerpVectors(startPos[i], endPos[i], lerpState.t);
+                obj.lookAt(endPos[i]);
+            });
+            needsRender = true;
+        })
+        .start();
 }
 
 document.getElementById('btn-table').onclick = () => transform(targets.table);
@@ -220,19 +198,15 @@ function animate(time) {
 
     if (controls.enabled) controls.update();
 
-    // Always update tween animations
     if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
     }
 
-    // Throttle only the render calls
-    if (delta > 16) {
-        lastFrame = time;
-
-        if (needsRender) {
-            renderer.render(scene, camera);
-            needsRender = false;
-        }
+    if (TWEEN.getAll().length > 0) {
+        renderer.render(scene, camera);
+    } else if (delta > 16 && needsRender) {
+        renderer.render(scene, camera);
+        needsRender = false;
     }
 }
