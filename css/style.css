@@ -69,9 +69,9 @@ body {
     flex-direction: column;
     justify-content: space-between;
     opacity: 0.92;
-    will-change: transform;
+	transform: translateZ(0) translate3d(0,0,0);
     transform-style: preserve-3d;
-	transform: translateZ(0);
+    will-change: transform;
 }
 
 .tile.red { 
