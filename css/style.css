@@ -172,6 +172,14 @@ img::selection,
     user-select: none;
 }
 
+body.transitioning {
+    pointer-events: none !important;
+}
+
+body.transitioning #container {
+    pointer-events: auto !important;
+}
+
 body.transitioning .tile {
     box-shadow: none !important;
     filter: none !important;
@@ -179,7 +187,9 @@ body.transitioning .tile {
 }
 
 body.transitioning .tile:hover {
-    transform: none !important;
+    background: inherit !important;
+    border-color: inherit !important;
     box-shadow: none !important;
-    filter: none !important;
+    transform: none !important;
+    transition: none !important;
 }
