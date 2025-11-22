@@ -160,39 +160,36 @@ function transform(targetsArray, duration = 1200) {
     document.body.classList.add("transitioning"); 
     TWEEN.removeAll();
 
-    const startPos = [];
-    const endPos = [];
-
-    const startQuat = [];
-    const endQuat = [];
-
-    objects.forEach((obj, i) => {
+    for (let i = 0; i < objects.length; i++) {
+        const object = objects[i];
         const target = targetsArray[i];
 
-        startPos[i] = obj.position.clone();
-        endPos[i]   = target.position.clone();
+        // --- POSITION TWEEN ---
+        new TWEEN.Tween(object.position)
+            .to({
+                x: target.position.x,
+                y: target.position.y,
+                z: target.position.z
+            }, duration)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onUpdate(() => { needsRender = true; })
+            .start();
 
-        // store quaternions
-        startQuat[i] = obj.quaternion.clone();
-        endQuat[i]   = target.quaternion.clone();
-    });
-    
-    let lerpState = { t: 0 };
+        new TWEEN.Tween(object.quaternion)
+            .to({
+                x: target.quaternion.x,
+                y: target.quaternion.y,
+                z: target.quaternion.z,
+                w: target.quaternion.w
+            }, duration)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onUpdate(() => { needsRender = true; })
+            .start();
+    }
 
-    new TWEEN.Tween(lerpState)
-        .to({ t: 1 }, duration)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .onUpdate(() => {
-            for (let i = 0; i < objects.length; i++) {
-                new TWEEN.Tween(obj.position).to(target.position, duration).start();
-                new TWEEN.Tween(obj.quaternion).to(target.quaternion, duration).start();
-            }
-            needsRender = true;
-        })
-        .onComplete(() => {
-            document.body.classList.remove("transitioning");
-        })
-        .start();
+    setTimeout(() => {
+        document.body.classList.remove("transitioning");
+    }, duration + 50);
 }
 
 document.getElementById('btn-table').onclick = () => transform(targets.table);
