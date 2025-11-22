@@ -157,7 +157,7 @@ function buildTargets(count) {
 
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
-
+    document.body.classList.add("transitioning"); 
     TWEEN.removeAll();
 
     const startPos = [];
@@ -176,7 +176,7 @@ function transform(targetsArray, duration = 1200) {
         startQuat[i] = obj.quaternion.clone();
         endQuat[i]   = target.quaternion.clone();
     });
-
+    
     let lerpState = { t: 0 };
 
     new TWEEN.Tween(lerpState)
@@ -184,16 +184,15 @@ function transform(targetsArray, duration = 1200) {
         .easing(TWEEN.Easing.Cubic.InOut)
         .onUpdate(() => {
             for (let i = 0; i < objects.length; i++) {
-                const obj = objects[i];
-                obj.position.lerpVectors(startPos[i], endPos[i], lerpState.t);
-                obj.quaternion.slerpQuaternions(startQuat[i], endQuat[i], lerpState.t);
+                objects[i].position.lerpVectors(startPos[i], endPos[i], lerpState.t);
+                objects[i].quaternion.slerpQuaternions(startQuat[i], endQuat[i], lerpState.t);
             }
-
             needsRender = true;
         })
+        .onComplete(() => {
+            document.body.classList.remove("transitioning");
+        })
         .start();
-
-    needsRender = true;
 }
 
 document.getElementById('btn-table').onclick = () => transform(targets.table);
