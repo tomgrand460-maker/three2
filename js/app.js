@@ -137,7 +137,9 @@ function buildTargets(count) {
         const helixHeight = pairIndex * verticalSpacing - helixYOffset;
         let obj = new THREE.Object3D();
         obj.position.set(helixRadius * Math.cos(angle), helixHeight, helixRadius * Math.sin(angle));
-        obj.lookAt(new THREE.Vector3(0, helixHeight, 0));
+        const outward = obj.position.clone().multiplyScalar(2);
+        outward.y = helixHeight;
+        obj.lookAt(outward);
         targets.helix.push(obj);
     }
 
