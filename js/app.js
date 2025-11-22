@@ -77,6 +77,7 @@ function buildTiles(data) {
         const div = document.createElement('div');
         div.className = `tile ${netColor(p.net)}`;
         div.style.transformStyle = "preserve-3d";
+        div.style.willChange = "transform";
         div.innerHTML = `
             <div class="top-row">
                 <span class="country">${p.country}</span>
