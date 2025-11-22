@@ -219,6 +219,17 @@ function onWindowResize() {
     needsRender = true;
 }
 
+function isInExpandedFrustum(frustum, object, padding = 400) {
+    const r = padding;
+    for (let i = 0; i < 6; i++) {
+        const plane = frustum.planes[i];
+        if (plane.distanceToPoint(object.position) < -r) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function animate(time) {
     requestAnimationFrame(animate);
 
@@ -233,7 +244,7 @@ function animate(time) {
 
     for (const o of objects) {
         o.element.style.visibility =
-            frustum.containsPoint(o.position) ? "visible" : "hidden";
+            isInExpandedFrustum(frustum, o, 600) ? "visible" : "hidden";
     }
 
     const delta = time - lastFrame;
