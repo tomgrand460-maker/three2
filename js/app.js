@@ -159,8 +159,8 @@ function buildTargets(count) {
 
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
-    document.body.classList.add("transitioning"); 
-    document.querySelectorAll('.tile').forEach(t => t.classList.remove('blur'));
+    controls.enabled = false;
+    document.body.classList.add("transitioning");
     TWEEN.removeAll();
 
     for (let i = 0; i < objects.length; i++) {
@@ -193,7 +193,7 @@ function transform(targetsArray, duration = 1200) {
 
     setTimeout(() => {
         document.body.classList.remove("transitioning");
-        document.querySelectorAll('.tile').forEach(t => t.classList.add('blur'));
+        controls.enabled = true;
     }, duration + 50);
 }
 
