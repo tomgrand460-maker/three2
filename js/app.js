@@ -209,20 +209,11 @@ function onWindowResize() {
 
 function animate(time) {
     requestAnimationFrame(animate);
-
     const delta = time - lastFrame;
-
     if (controls.enabled) controls.update();
-
     if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
     }
-
-    if (TWEEN.getAll().length > 0) {
-        renderer.render(scene, camera);
-    } else if (delta > 16 && needsRender) {
-        renderer.render(scene, camera);
-        needsRender = false;
-    }
+    renderer.render(scene, camera);
 }
