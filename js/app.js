@@ -178,15 +178,16 @@ function transform(targetsArray, duration = 1200) {
             .onUpdate(() => { needsRender = true; })
             .start();
 
-        new TWEEN.Tween(object.quaternion)
-            .to({
-                x: target.quaternion.x,
-                y: target.quaternion.y,
-                z: target.quaternion.z,
-                w: target.quaternion.w
-            }, duration)
+        const qStart = object.quaternion.clone();
+        const qEnd   = target.quaternion.clone();
+        
+        new TWEEN.Tween({ t: 0 })
+            .to({ t: 1 }, duration)
             .easing(TWEEN.Easing.Cubic.InOut)
-            .onUpdate(() => { needsRender = true; })
+            .onUpdate(({ t }) => {
+                object.quaternion.copy(qStart).slerp(qEnd, t);
+                needsRender = true;
+            })
             .start();
     }
 
