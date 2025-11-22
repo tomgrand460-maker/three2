@@ -219,8 +219,8 @@ function onWindowResize() {
     needsRender = true;
 }
 
-function animate(time) {r
-    equestAnimationFrame(animate);
+function animate(time) {
+    requestAnimationFrame(animate);
 
     const frustum = new THREE.Frustum();
     camera.updateMatrixWorld();
