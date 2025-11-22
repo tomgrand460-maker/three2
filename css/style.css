@@ -67,7 +67,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    opacity: 0.92;
 	transform: translateZ(0) translate3d(0,0,0);
     transform-style: preserve-3d;
     will-change: transform;
@@ -181,6 +180,7 @@ body.transitioning #container {
 }
 
 body.transitioning .tile {
+    visibility: hidden !important;
     box-shadow: none !important;
     filter: none !important;
     transition: none !important;
