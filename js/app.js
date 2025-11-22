@@ -24,7 +24,7 @@ function init() {
     document.getElementById('container').appendChild(renderer.domElement);
 
     controls = new TrackballControls(camera, renderer.domElement);
-    controls.minDistance = 10;
+    controls.minDistance = 600;
     controls.maxDistance = 20000;
     controls.rotateSpeed = 2.0;
     controls.zoomSpeed = 1.2;
@@ -212,7 +212,14 @@ function onWindowResize() {
 function animate(time) {
     requestAnimationFrame(animate);
     const delta = time - lastFrame;
-    if (controls.enabled) controls.update();
+    if (controls.enabled) {
+        controls.update();
+        const dist = camera.position.length();
+        const min = 600;
+        if (dist < min) {
+            camera.position.setLength(min);
+        }
+    }
     if (TWEEN.getAll().length > 0) {
         TWEEN.update(time);
         needsRender = true;
