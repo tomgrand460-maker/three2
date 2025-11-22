@@ -22,7 +22,8 @@ function init() {
     renderer = new CSS3DRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('container').appendChild(renderer.domElement);
-    renderer.domElement.style.perspective = '1200px';
+    const container = document.getElementById('container');
+    container.style.perspective = '1200px';
 
     controls = new TrackballControls(camera, renderer.domElement);
     controls.minDistance = 10;
