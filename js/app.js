@@ -157,14 +157,24 @@ function buildTargets(count) {
 
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
+
     TWEEN.removeAll();
 
     const startPos = [];
     const endPos = [];
 
+    const startQuat = [];
+    const endQuat = [];
+
     objects.forEach((obj, i) => {
+        const target = targetsArray[i];
+
         startPos[i] = obj.position.clone();
-        endPos[i]   = targetsArray[i].position.clone();
+        endPos[i]   = target.position.clone();
+
+        // store quaternions
+        startQuat[i] = obj.quaternion.clone();
+        endQuat[i]   = target.quaternion.clone();
     });
 
     let lerpState = { t: 0 };
@@ -174,8 +184,9 @@ function transform(targetsArray, duration = 1200) {
         .easing(TWEEN.Easing.Cubic.InOut)
         .onUpdate(() => {
             for (let i = 0; i < objects.length; i++) {
-                objects[i].position.lerpVectors(startPos[i], endPos[i], lerpState.t);
-                objects[i].lookAt(endPos[i]);
+                const obj = objects[i];
+                obj.position.lerpVectors(startPos[i], endPos[i], lerpState.t);
+                obj.quaternion.slerpQuaternions(startQuat[i], endQuat[i], lerpState.t);
             }
 
             needsRender = true;
@@ -184,6 +195,7 @@ function transform(targetsArray, duration = 1200) {
 
     needsRender = true;
 }
+
 document.getElementById('btn-table').onclick = () => transform(targets.table);
 document.getElementById('btn-sphere').onclick = () => transform(targets.sphere);
 document.getElementById('btn-helix').onclick = () => transform(targets.helix);
