@@ -71,6 +71,7 @@ body {
     opacity: 0.92;
     will-change: transform;
     transform-style: preserve-3d;
+	transform: translateZ(0);
 }
 
 .tile.red { 
