@@ -158,6 +158,7 @@ function buildTargets(count) {
 function transform(targetsArray, duration = 1200) {
     if (!targetsArray || !objects.length) return;
     TWEEN.removeAll();
+
     const startPos = [];
     const endPos = [];
 
@@ -166,19 +167,23 @@ function transform(targetsArray, duration = 1200) {
         endPos[i]   = targetsArray[i].position.clone();
     });
 
+    let lerpState = { t: 0 };
+
     new TWEEN.Tween(lerpState)
         .to({ t: 1 }, duration)
         .easing(TWEEN.Easing.Cubic.InOut)
         .onUpdate(() => {
-            objects.forEach((obj, i) => {
-                obj.position.lerpVectors(startPos[i], endPos[i], lerpState.t);
-                obj.lookAt(endPos[i]);
-            });
+            for (let i = 0; i < objects.length; i++) {
+                objects[i].position.lerpVectors(startPos[i], endPos[i], lerpState.t);
+                objects[i].lookAt(endPos[i]);
+            }
+
             needsRender = true;
         })
         .start();
-}
 
+    needsRender = true;
+}
 document.getElementById('btn-table').onclick = () => transform(targets.table);
 document.getElementById('btn-sphere').onclick = () => transform(targets.sphere);
 document.getElementById('btn-helix').onclick = () => transform(targets.helix);
