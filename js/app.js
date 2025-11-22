@@ -120,7 +120,7 @@ function buildTargets(count) {
         targets.sphere.push(obj);
     }
 
-    const helixRadius = 650;
+    const helixRadius = 800;
     const angleStep = 0.25;
     const verticalSpacing = 40;
     const totalSegments = Math.ceil(count / 2);
