@@ -169,3 +169,15 @@ img::selection,
     -webkit-user-drag: none;
     user-select: none;
 }
+
+body.transitioning .tile {
+    box-shadow: none !important;
+    filter: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+body.transitioning .tile:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
